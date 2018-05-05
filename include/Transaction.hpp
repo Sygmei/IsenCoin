@@ -1,19 +1,28 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+
+#include <Wallet.hpp>
+
 namespace ic
 {
+    using signature_t = std::array<unsigned char, 64>;
     class Transaction 
     {
     private:
-        int m_signature;
-        int m_time;
+        signature_t m_signature;
+        uint32_t m_timestamp;
         float m_amount;
-        int m_sender;
-        int m_receiver;
+        public_key_t m_sender;
+        public_key_t m_receiver;
     public:
-        Transaction(int sender, int receiver, float amount);
-        int sign(int key);
+        static signature_t get_merkel_root(const std::vector<signature_t>& signatures);
+        static signature_t combine(const signature_t& signature1, const signature_t& signature2);
+        Transaction(const Wallet& sender, const Wallet& receiver, float amount);
         void validate();
-        float balance(int address);
+        const signature_t& get_signature() const;
+        std::string get_printable_signature() const;
+        //float balance(int address);
     };
 }

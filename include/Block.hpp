@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <Transaction.hpp>
 
 namespace ic
@@ -13,5 +15,7 @@ namespace ic
         int m_current_hash = 0;
         int m_previous_hash = 0;
         int m_time = 0;    
+    public:
+        void validate();
     };
 }

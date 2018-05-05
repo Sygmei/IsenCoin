@@ -2,7 +2,7 @@
 
 namespace ic
 {
-    Wallet& Chain::create_wallet()
+    Wallet Chain::create_wallet()
     {
         return Wallet();
     }

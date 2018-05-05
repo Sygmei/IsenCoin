@@ -2,10 +2,16 @@ cmake_minimum_required(VERSION 3.6)
 
 project(isencoin)
 
+add_subdirectory(extlibs/ed25519)
+add_subdirectory(extlibs/base_x)
+
 file(GLOB ISENCOIN_HEADERS include/*.hpp)
 file(GLOB ISENCOIN_SOURCES src/*.cpp)
 
 add_executable(isencoin ${ISENCOIN_HEADERS} ${ISENCOIN_SOURCES})
+
+target_link_libraries(isencoin ed25519)
+target_link_libraries(isencoin basex)
 
 target_include_directories(isencoin
     PUBLIC 
