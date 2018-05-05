@@ -4,6 +4,10 @@ project(isencoin)
 
 add_subdirectory(extlibs/ed25519)
 add_subdirectory(extlibs/base_x)
+add_subdirectory(extlibs/msgpack11)
+add_subdirectory(extlibs/tacopie)
+
+find_package(Threads REQUIRED)
 
 file(GLOB ISENCOIN_HEADERS include/*.hpp)
 file(GLOB ISENCOIN_SOURCES src/*.cpp)
@@ -12,6 +16,9 @@ add_executable(isencoin ${ISENCOIN_HEADERS} ${ISENCOIN_SOURCES})
 
 target_link_libraries(isencoin ed25519)
 target_link_libraries(isencoin basex)
+target_link_libraries(isencoin msgpack11)
+target_link_libraries(isencoin tacopie)
+target_link_libraries(isencoin Threads::Threads)
 
 target_include_directories(isencoin
     PUBLIC 

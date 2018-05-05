@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include <base_x/base_x.hh>
+#include <msgpack11/msgpack11.hpp>
+#include <tacopie/tacopie>
 
 #include <argh.h>
 #include <Chain.hpp>
@@ -10,6 +12,42 @@
 
 int main(int argc, char** argv)
 {
+    using namespace msgpack11;
+
+    MsgPack my_msgpack = MsgPack::object {
+        { "key1", "value1" },
+        { "key2", false },
+        { "key3", MsgPack::array { 1, 2, 3 } },
+    };
+    
+    //access to elements
+    std::cout << my_msgpack["key1"].string_value() << std::endl;
+    
+    //serialize
+    std::string msgpack_bytes = my_msgpack.dump();
+    std::cout << "Bytes : " << msgpack_bytes << std::endl;
+    
+    //deserialize
+    std::string err;
+    MsgPack des_msgpack = MsgPack::parse(msgpack_bytes, err);
+
+    tacopie::tcp_server s;
+    s.start("127.0.0.1", 3001, [] (const std::shared_ptr<tacopie::tcp_client>& client) -> bool {
+      std::cout << "New client" << std::endl;
+      client->async_read({1024, [client](const tacopie::tcp_client::read_result& res) {
+          if (res.success) {
+              std::string response = "HTTP/1.1 200 OK\nContent-Length: 1\nContent-Type: text/plain\na";
+              std::vector<char> res_vec(response.begin(), response.end());
+              std::cout << "Success" << std::endl;
+              client->async_write({res_vec, nullptr});
+          }
+          else {
+              std::cout << "Failed :(" << std::endl;
+          }
+      }});
+      return true;
+    });
+
     using namespace ic;
     argh::parser cmdl;
     cmdl.add_param("prefix");
@@ -53,6 +91,8 @@ int main(int argc, char** argv)
     
     std::string merkle_root = char_array_to_hex(Transaction::get_merkel_root(sgns));
     std::cout << "Merkel Root is : " << merkle_root << std::endl;
+
+    while (true) {}
 
     return 0;
 }
