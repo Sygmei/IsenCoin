@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 namespace ic::config
 {
-    float reward = 10;
-    unsigned int m_address_length = 22;
+    constexpr uint16_t DEFAULT_PORT = 15317;
+    constexpr uint8_t ISENCOIN_VERSION = 1;
 }

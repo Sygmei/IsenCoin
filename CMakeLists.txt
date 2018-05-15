@@ -6,6 +6,9 @@ add_subdirectory(extlibs/ed25519)
 add_subdirectory(extlibs/base_x)
 add_subdirectory(extlibs/msgpack11)
 add_subdirectory(extlibs/tacopie)
+add_subdirectory(extlibs/fmt)
+add_subdirectory(extlibs/spdlog)
+add_subdirectory(extlibs/vili)
 
 find_package(Threads REQUIRED)
 
@@ -18,6 +21,9 @@ target_link_libraries(isencoin ed25519)
 target_link_libraries(isencoin basex)
 target_link_libraries(isencoin msgpack11)
 target_link_libraries(isencoin tacopie)
+target_link_libraries(isencoin fmt)
+target_link_libraries(isencoin spdlog)
+target_link_libraries(isencoin vili)
 target_link_libraries(isencoin Threads::Threads)
 
 target_include_directories(isencoin

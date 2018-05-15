@@ -4,15 +4,36 @@
 #include <base_x/base_x.hh>
 #include <msgpack11/msgpack11.hpp>
 #include <tacopie/tacopie>
+#include <vili/Vili.hpp>
 
 #include <argh.h>
 #include <Chain.hpp>
+#include <Config.hpp>
+#include <Logger.hpp>
+#include <Message.hpp>
+#include <Tracker.hpp>
 #include <Transaction.hpp>
 #include <Utils.hpp>
 
+std::condition_variable cv;
+
+void
+signint_handler(int) {
+  cv.notify_all();
+}
+
 int main(int argc, char** argv)
 {
+    argh::parser cmdl;
+    cmdl.add_param("prefix");
+    cmdl.add_param("prefix2");
+    cmdl.add_param("port");
+    cmdl.parse(argc, argv);
+
+    using namespace ic;
     using namespace msgpack11;
+
+    initialize_logger();
 
     MsgPack my_msgpack = MsgPack::object {
         { "key1", "value1" },
@@ -30,30 +51,32 @@ int main(int argc, char** argv)
     //deserialize
     std::string err;
     MsgPack des_msgpack = MsgPack::parse(msgpack_bytes, err);
+    
+    unsigned int port;
+    if (cmdl("port"))
+    {
+        try 
+        {
+            port = std::stoi(cmdl("port").str());
+        }
+        catch (const std::invalid_argument& e)
+        {
+            Log->warn("Invalid port : \"{}\", using default port 15317", cmdl("port").str());
+            port = ic::config::DEFAULT_PORT;
+        }
+    }
+    else
+    {
+        port = ic::config::DEFAULT_PORT;
+    }
+    Tracker tracker(port);
+    vili::ViliParser config_file;
+    config_file.parseFile("config.vili");
+    for (const vili::DataNode* ip : config_file.at<vili::ArrayNode>("ips"))
+        tracker.add_node(Node(ip->get<std::string>()));
 
-    tacopie::tcp_server s;
-    s.start("127.0.0.1", 3001, [] (const std::shared_ptr<tacopie::tcp_client>& client) -> bool {
-      std::cout << "New client" << std::endl;
-      client->async_read({1024, [client](const tacopie::tcp_client::read_result& res) {
-          if (res.success) {
-              std::string response = "HTTP/1.1 200 OK\nContent-Length: 1\nContent-Type: text/plain\na";
-              std::vector<char> res_vec(response.begin(), response.end());
-              std::cout << "Success" << std::endl;
-              client->async_write({res_vec, nullptr});
-          }
-          else {
-              std::cout << "Failed :(" << std::endl;
-          }
-      }});
-      return true;
-    });
-
-    using namespace ic;
-    argh::parser cmdl;
-    cmdl.add_param("prefix");
-    cmdl.add_param("prefix2");
-    cmdl.parse(argc, argv);
-    unsigned int prefix_size = cmdl("prefix").str().size();
+    
+    /*unsigned int prefix_size = cmdl("prefix").str().size();
 
     std::cout << sizeof(uint32_t) << " or " << sizeof(int) << std::endl;
 
@@ -90,9 +113,11 @@ int main(int argc, char** argv)
     }
     
     std::string merkle_root = char_array_to_hex(Transaction::get_merkel_root(sgns));
-    std::cout << "Merkel Root is : " << merkle_root << std::endl;
+    std::cout << "Merkel Root is : " << merkle_root << std::endl;*/
 
-    while (true) {}
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait(lock);
 
     return 0;
 }
