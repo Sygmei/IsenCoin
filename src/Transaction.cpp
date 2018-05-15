@@ -4,8 +4,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
+#include <vector>
 
-#include <base_x/base_x.hh>
 #include <ed25519/ed25519.h>
 #include <ed25519/sha512.h>
 
@@ -37,10 +37,10 @@ namespace ic
         std::cout << "}" << std::endl;
         std::cout << "Transaction Data HexFormat : " << char_array_to_hex(message) << std::endl;
         const unsigned char* message_cstr = reinterpret_cast<const unsigned char *>(message.c_str());
-        ed25519_sign(m_signature.begin(), message_cstr, message.size(), sender.get_public_key().begin(), sender.get_private_key().begin());
+        ed25519_sign(m_signature.data(), message_cstr, message.size(), sender.get_public_key().data(), sender.get_private_key().data());
         std::string str_sign(std::begin(m_signature), std::end(m_signature));
-        std::string encoded = Base58::base58().encode(str_sign);
-        std::cout << "Signature : " <<this->get_printable_signature() << std::endl;
+        //std::string encoded = Base58::base58().encode(str_sign);
+        //std::cout << "Signature : " <<this->get_printable_signature() << std::endl;
     }
 
     void Transaction::validate()
@@ -70,7 +70,7 @@ namespace ic
         signature_t result;
         std::copy(signature1.begin(), signature1.end(), input.begin());
         std::copy(signature2.begin(), signature2.end(), input.begin() + signature1.size());
-        sha512(input.begin(), input.size(), result.begin());
+        sha512(input.data(), input.size(), result.data());
         return result;
     }
     

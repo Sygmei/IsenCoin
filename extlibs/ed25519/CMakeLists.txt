@@ -7,6 +7,10 @@ file(GLOB ED25519_SOURCES src/*.c)
 
 add_library(ed25519 ${ED25519_HEADERS} ${ED25519_SOURCES})
 
+if (MSVC)
+	target_compile_definitions(ed25519 PUBLIC _STDINT_H_ _STDINT_H_INCLUDED __WATCOMC__)
+endif()
+
 target_include_directories(ed25519
     PUBLIC 
         $<INSTALL_INTERFACE:include>

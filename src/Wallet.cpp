@@ -1,12 +1,14 @@
 #include <Wallet.hpp>
 
-#include <base_x/base_x.hh>
+#include <base58/base58.hpp>
 #include <ed25519/ed25519.h>
 
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <random>
+#include <string>
+#include <numeric>
 
 namespace ic 
 {
@@ -14,7 +16,7 @@ namespace ic
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dis(0, std::numeric_limits<unsigned char>::max());
+        const std::uniform_int_distribution<> dis(0, std::numeric_limits<unsigned char>::max());
         constexpr unsigned int SEED_SIZE = 32;
 
         unsigned char seed[SEED_SIZE];
@@ -24,17 +26,14 @@ namespace ic
         std::string encoded;
         do
         {
-            for (unsigned int i = 0; i < SEED_SIZE; i++)
-            {
-                seed[i] = dis(gen);
-            }
+            for (unsigned char& i : seed)
+                i = dis(gen);
             ed25519_create_keypair(public_key, private_key, seed);
 
             std::copy(std::begin(private_key), std::end(private_key), std::begin(m_private_key));
             std::copy(std::begin(public_key), std::end(public_key), std::begin(m_public_key));
 
-            std::string str_pub(std::begin(public_key), std::end(public_key));
-            encoded = Base58::base58().encode(str_pub);
+            encoded = base58::encode(m_public_key.data(), m_public_key.data() + m_public_key.size());
         } while (encoded.rfind(prefix, 0) != 0);
         std::cout << "FOUND ADDRESS : " << encoded << std::endl;
     }
@@ -80,7 +79,7 @@ namespace ic
             ed25519_create_keypair(public_key, private_key, seed);
 
             std::string str_pub(std::begin(public_key), std::end(public_key));
-            encoded = Base58::base58().encode(str_pub);
+            //encoded = Base58::base58().encode(str_pub);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
             time_vector.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count());
         }

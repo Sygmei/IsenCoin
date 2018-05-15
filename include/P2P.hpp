@@ -8,6 +8,12 @@
 #include <msgpack11/msgpack11.hpp>
 #include <tacopie/network/tcp_socket.hpp>
 
+namespace tacopie
+{
+    int init();
+    void close();
+}
+
 namespace ic::p2p
 {
     namespace mp = msgpack11;

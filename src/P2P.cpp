@@ -3,6 +3,31 @@
 #include <P2P.hpp>
 
 #include <fmt/format.h>
+#include <tacopie/utils/logger.hpp>
+
+#include <iostream>
+
+int tacopie::init()
+{
+    tacopie::active_logger = std::make_unique<tacopie::logger>();
+    #ifdef _WIN32
+        const WORD version = MAKEWORD(2, 2);
+        WSADATA data;
+
+        if (WSAStartup(version, &data) != 0) {
+            std::cerr << "WSAStartup() failure" << std::endl;
+            return -1;
+        }
+    #endif
+    return 0;
+}
+
+void tacopie::close()
+{
+    #ifdef _WIN32
+        WSACleanup();
+    #endif
+}
 
 namespace ic::p2p
 {

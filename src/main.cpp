@@ -1,7 +1,6 @@
 #include <cmath>
 #include <iostream>
 
-#include <base_x/base_x.hh>
 #include <msgpack11/msgpack11.hpp>
 #include <tacopie/tacopie>
 #include <vili/Vili.hpp>
@@ -11,9 +10,12 @@
 #include <Config.hpp>
 #include <Logger.hpp>
 #include <Message.hpp>
+#include <P2P.hpp>
 #include <Tracker.hpp>
 #include <Transaction.hpp>
 #include <Utils.hpp>
+
+#include <ed25519/fixedint.h>
 
 std::condition_variable cv;
 
@@ -24,6 +26,8 @@ signint_handler(int) {
 
 int main(int argc, char** argv)
 {
+    tacopie::init();
+
     argh::parser cmdl;
     cmdl.add_param("prefix");
     cmdl.add_param("prefix2");
@@ -70,13 +74,12 @@ int main(int argc, char** argv)
         port = ic::config::DEFAULT_PORT;
     }
     Tracker tracker(port);
-    vili::ViliParser config_file;
+    /*vili::ViliParser config_file;
     config_file.parseFile("config.vili");
     for (const vili::DataNode* ip : config_file.at<vili::ArrayNode>("ips"))
-        tracker.add_node(Node(ip->get<std::string>()));
+        tracker.add_node(Node(ip->get<std::string>()));*/
 
-    
-    /*unsigned int prefix_size = cmdl("prefix").str().size();
+    const unsigned int prefix_size = cmdl("prefix").str().size();
 
     std::cout << sizeof(uint32_t) << " or " << sizeof(int) << std::endl;
 
@@ -88,18 +91,16 @@ int main(int argc, char** argv)
 
     std::cout << "Starting IsenCoin Program..." << std::endl;
     std::cout << "Benchmarking Wallet creation..." << std::endl;
-    unsigned long long int input_seconds = (double(std::pow(58, prefix_size)) * Wallet::Benchmark()) / 1000000.0;
-    unsigned int days = input_seconds / 60 / 60 / 24;
-    unsigned int hours = (input_seconds / 60 / 60) % 24;
-    unsigned int minutes = (input_seconds / 60) % 60;
-    unsigned int seconds = input_seconds % 60;
+    const unsigned long long int input_seconds = (double(std::pow(58, prefix_size)) * Wallet::Benchmark()) / 1000000.0;
+    const unsigned int days = input_seconds / 60 / 60 / 24;
+    const unsigned int hours = (input_seconds / 60 / 60) % 24;
+    const unsigned int minutes = (input_seconds / 60) % 60;
+    const unsigned int seconds = input_seconds % 60;
     std::cout << "Asked prefix will take approximatively " << days << "d " << hours << "h " << minutes << "m " << seconds << "s" << std::endl;
     myWallet.generate(cmdl("prefix").str());
     myWallet2.generate(cmdl("prefix2").str());
     auto pub = myWallet.get_public_key();
     std::string str_pub(std::begin(pub), std::end(pub));
-    auto encoded = Base58::base58().encode(str_pub);
-    std::cout << "isen_" + encoded << std::endl;
 
     std::vector<Transaction> txs;
     for (unsigned int i = 1; i < 4; i++)
@@ -111,13 +112,15 @@ int main(int argc, char** argv)
     {
         sgns.emplace_back(tx.get_signature());
     }
-    
-    std::string merkle_root = char_array_to_hex(Transaction::get_merkel_root(sgns));
-    std::cout << "Merkel Root is : " << merkle_root << std::endl;*/
+
+    const std::string merkle_root = char_array_to_hex(Transaction::get_merkel_root(sgns));
+    std::cout << "Merkel Root is : " << merkle_root << std::endl;
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
     cv.wait(lock);
+
+    tacopie::close();
 
     return 0;
 }
