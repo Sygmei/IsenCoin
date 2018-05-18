@@ -37,6 +37,7 @@ namespace ic
             catch (const std::exception& e)
             {
                 Log->error("Failed to connect to Node {}:{} (Reason : {})", node.get_address(), node.get_port(), e.what());
+                return;
             }
             msg = p2p::build_msg("hello", { { "port", m_port } });
             p2p::send_msg(client.get_socket(), msg);

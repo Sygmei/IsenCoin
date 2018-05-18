@@ -16,7 +16,7 @@ namespace ic
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        const std::uniform_int_distribution<> dis(0, std::numeric_limits<unsigned char>::max());
+        std::uniform_int_distribution<> dis(0, std::numeric_limits<unsigned char>::max());
         constexpr unsigned int SEED_SIZE = 32;
 
         unsigned char seed[SEED_SIZE];
@@ -27,7 +27,7 @@ namespace ic
         do
         {
             for (unsigned char& i : seed)
-                i = dis(gen);
+                i = dis(gen); //lol
             ed25519_create_keypair(public_key, private_key, seed);
 
             std::copy(std::begin(private_key), std::end(private_key), std::begin(m_private_key));
@@ -60,7 +60,7 @@ namespace ic
     {
         std::random_device rd;
         std::mt19937 gen(rd());
-        const std::uniform_int_distribution<> dis(0, std::numeric_limits<unsigned char>::max());
+        std::uniform_int_distribution<> dis(0, std::numeric_limits<unsigned char>::max());
         constexpr unsigned int SEED_SIZE = 32;
 
         unsigned char seed[SEED_SIZE];
