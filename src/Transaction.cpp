@@ -50,6 +50,8 @@ namespace ic
     void Transaction::validate()
     {
         std::string tx_sign_message = this->get_signable_transaction_message();
+        std::cout << "TSM : " << tx_sign_message << std::endl;
+        std::cout << "TSM Size : " << tx_sign_message.size() << std::endl;
         if (ed25519_verify(m_signature.data(), reinterpret_cast<const unsigned char*>(tx_sign_message.c_str()), tx_sign_message.size(), m_sender.data()))
         {
             if (m_sender == config::ISENCOIN_NULL_ADDRESS && m_amount != config::ISENCOIN_REWARD)
@@ -133,7 +135,7 @@ namespace ic
     {
         //m_amount += 1;
         //m_timestamp += 1;
-        //m_sender[10] = m_sender[11];
+        //m_sender[31] = m_sender[11];
         //m_receiver[0] = 0;
         //m_signature[0] = 10;
     }
@@ -146,7 +148,7 @@ namespace ic
         ss << "    receiver : " << base58::encode(m_receiver.data(), m_receiver.data() + m_receiver.size()) << "," << std::endl;
         ss << "    amount : " << m_amount << "," << std::endl;
         ss << "    timestamp : " << m_timestamp << "," << std::endl;
-        ss << "    signature : " << base58::encode(m_signature.data(), m_signature.data() + m_signature.size());
+        ss << "    signature : " << base58::encode(m_signature.data(), m_signature.data() + m_signature.size()) << std::endl;
         ss << "};";
         return ss.str();
     }
@@ -157,8 +159,8 @@ namespace ic
         std::stringstream ss;
         ss << txfc::timestamp << m_timestamp;
         ss << txfc::amount << m_amount;
-        ss << txfc::sender << m_sender.data();
-        ss << txfc::receiver << m_receiver.data();
+        ss << txfc::sender << std::string(m_sender.begin(), m_sender.end());
+        ss << txfc::receiver << std::string(m_receiver.begin(), m_receiver.end());
         return ss.str();
     }
 
