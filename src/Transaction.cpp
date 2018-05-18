@@ -8,13 +8,25 @@
 
 #include <ed25519/ed25519.h>
 #include <ed25519/sha512.h>
+#include <msgpack11/msgpack11.hpp>
 
 #include <Config.hpp>
 #include <Transaction.hpp>
 #include <Utils.hpp>
+#include "base58/base58.hpp"
+#include "Exceptions.hpp"
 
 namespace ic
 {
+    namespace mp = msgpack11;
+    p2p::Requirements Transaction::Fields = {
+        { "signature", mp::MsgPack::Type::STRING },
+        { "timestamp", mp::MsgPack::Type::UINT32 },
+        { "amount", mp::MsgPack::Type::FLOAT32 },
+        { "sender", mp::MsgPack::Type::STRING },
+        { "receiver", mp::MsgPack::Type::STRING }
+    };
+
     Transaction::Transaction(const Wallet& sender, const Wallet& receiver, float amount)
     {
         m_sender = sender.get_public_key();
@@ -23,33 +35,35 @@ namespace ic
         std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
         m_timestamp = std::chrono::duration_cast<std::chrono::seconds>(tp.time_since_epoch()).count();
 
-        std::string message = std::to_string(m_timestamp) + "_" + std::to_string(m_amount) + "_";
-        for (const auto& e : sender.get_public_key())
-            message += e;
-        message += "_";
-        for (const auto& e : receiver.get_public_key())
-            message += e;
-        std::cout << "Transaction data : {" << std::endl;
-        std::cout << "    sender : " << char_array_to_hex(m_sender) << "," << std::endl;
-        std::cout << "    receiver : " << char_array_to_hex(m_receiver) << "," << std::endl;
-        std::cout << "    amount : " << m_amount << "," << std::endl;
-        std::cout << "    timestamp : " << m_timestamp << "," << std::endl;
-        std::cout << "}" << std::endl;
-        std::cout << "Transaction Data HexFormat : " << char_array_to_hex(message) << std::endl;
-        const unsigned char* message_cstr = reinterpret_cast<const unsigned char *>(message.c_str());
-        ed25519_sign(m_signature.data(), message_cstr, message.size(), sender.get_public_key().data(), sender.get_private_key().data());
-        std::string str_sign(std::begin(m_signature), std::end(m_signature));
-        //std::string encoded = Base58::base58().encode(str_sign);
-        //std::cout << "Signature : " <<this->get_printable_signature() << std::endl;
+        std::string tx_sign_message = this->get_signable_transaction_message();
+        ed25519_sign(
+            m_signature.data(), 
+            reinterpret_cast<const unsigned char *>(tx_sign_message.c_str()),
+            tx_sign_message.size(),
+            sender.get_public_key().data(), 
+            sender.get_private_key().data()
+        );
+
+        std::cout << this->as_string() << std::endl;
     }
 
     void Transaction::validate()
     {
+        std::string tx_sign_message = this->get_signable_transaction_message();
+        if (ed25519_verify(m_signature.data(), reinterpret_cast<const unsigned char*>(tx_sign_message.c_str()), tx_sign_message.size(), m_sender.data()))
+        {
+            if (m_sender == config::ISENCOIN_NULL_ADDRESS && m_amount != config::ISENCOIN_REWARD)
+            {
+                throw except::InvalidRewardAmount(m_amount);
+            }
+        }
+        else
+            throw except::InvalidTransactionException(this->as_string());
         /*if (m_sender != 0)
         {
 
-        }
-        else if (m_amount != config::reward)
+        }*/
+        /*else if (m_amount != config::)
         {
             throw std::runtime_error("Invalid Reward Amount");
         }*/
@@ -82,6 +96,70 @@ namespace ic
     std::string Transaction::get_printable_signature() const
     {
         return char_array_to_hex(m_signature);
+    }
+
+    uint32_t Transaction::get_timestamp() const
+    {
+        return m_timestamp;
+    }
+
+    float Transaction::get_amount() const
+    {
+        return m_amount;
+    }
+
+    const public_key_t& Transaction::get_sender() const
+    {
+        return m_sender;
+    }
+
+    const public_key_t& Transaction::get_receiver() const
+    {
+        return m_receiver;
+    }
+
+    mp::MsgPack Transaction::to_msgpack() const
+    {
+        return p2p::build_msg("transaction", {
+            { "amount", m_amount },
+            { "timestamp", m_timestamp },
+            { "signature", base58::encode(m_signature.data(), m_signature.data() + m_signature.size()) },
+            { "sender", base58::encode(m_sender.data(), m_sender.data() + m_sender.size()) },
+            { "receiver", base58::encode(m_receiver.data(), m_receiver.data() + m_receiver.size()) },
+        });
+    }
+
+    void Transaction::corrupt()
+    {
+        //m_amount += 1;
+        //m_timestamp += 1;
+        //m_sender[10] = m_sender[11];
+        //m_receiver[0] = 0;
+        //m_signature[0] = 10;
+    }
+
+    std::string Transaction::as_string() const
+    {
+        std::stringstream ss;
+        ss << "Transaction data : {" << std::endl;
+        ss << "    sender : " << base58::encode(m_sender.data(), m_sender.data() + m_sender.size()) << "," << std::endl;
+        ss << "    receiver : " << base58::encode(m_receiver.data(), m_receiver.data() + m_receiver.size()) << "," << std::endl;
+        ss << "    amount : " << m_amount << "," << std::endl;
+        ss << "    timestamp : " << m_timestamp << "," << std::endl;
+        ss << "    signature : " << base58::encode(m_signature.data(), m_signature.data() + m_signature.size());
+        ss << "};";
+        return ss.str();
+    }
+
+    std::string Transaction::get_signable_transaction_message()
+    {
+        namespace txfc = config::tx_field_chars;
+        std::stringstream ss;
+        ss << txfc::timestamp << m_timestamp;
+        ss << txfc::amount << m_amount;
+        ss << txfc::sender << m_sender.data();
+        ss << txfc::receiver << m_receiver.data();
+        return ss.str();
     }
 
     signature_t Transaction::get_merkel_root(const std::vector<signature_t>& signatures)

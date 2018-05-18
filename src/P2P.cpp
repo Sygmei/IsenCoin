@@ -33,6 +33,31 @@ namespace ic::p2p
 {
     namespace mp = msgpack11;
 
+    std::string msgpack_type_to_string(mp::MsgPack::Type type)
+    {
+        switch (type)
+        {
+        case msgpack11::MsgPack::NUL: return "NUL";
+        case msgpack11::MsgPack::FLOAT32: return "FLOAT32";
+        case msgpack11::MsgPack::FLOAT64: return "FLOAT64";
+        case msgpack11::MsgPack::INT8: return "INT8";
+        case msgpack11::MsgPack::INT16: return "INT16";
+        case msgpack11::MsgPack::INT32: return "INT32";
+        case msgpack11::MsgPack::INT64: return "INT64";
+        case msgpack11::MsgPack::UINT8: return "UINT8";
+        case msgpack11::MsgPack::UINT16: return "UINT16";
+        case msgpack11::MsgPack::UINT32: return "UINT32";
+        case msgpack11::MsgPack::UINT64: return "UINT64";
+        case msgpack11::MsgPack::BOOL: return "BOOL";
+        case msgpack11::MsgPack::STRING: return "STRING";
+        case msgpack11::MsgPack::BINARY: return "BINARY";
+        case msgpack11::MsgPack::ARRAY: return "ARRAY";
+        case msgpack11::MsgPack::OBJECT: return "OBJECT";
+        case msgpack11::MsgPack::EXTENSION: return "EXTENSION";
+        default: return "ERROR-TYPE";
+        }
+    }
+
     bool Requirement::has_check() const
     {
         return check.has_value();
@@ -93,23 +118,24 @@ namespace ic::p2p
 
     bool is_msgpack_valid_type(const mp::MsgPack& msg, const std::string& type)
     {
-        if (msg["type"].is_string() && msg["type"].string_value() == type)
-            return true;
-        else
-            throw except::TypeMismatchException(type, msg["type"].string_value());
+        Log->trace("Compare {} and {}", type, msg["type"].string_value());
+        return msg["type"].is_string() && msg["type"].string_value() == type;
     }
 
-    bool check_requirement(const mp::MsgPack& msg, Requirement req)
+    bool check_requirement(const std::string& name, const mp::MsgPack& msg, Requirement req)
     {
-        return (req.type == msg.type() && req.check_if_needed(msg));
+        if (req.type != msg.type())
+            throw except::MessageRequirementException(name, msgpack_type_to_string(req.type), msgpack_type_to_string(msg.type()));
+        if (!req.check_if_needed(msg))
+            throw except::MessageRequirementCustomCheckException(name);
     }
 
     void use_msg(
         const mp::MsgPack& msg, 
         const std::string& type, 
-        success_callback_t on_success, 
-        failure_callback_t on_failure,
-        std::vector<Requirement> requirements
+        success_callback_t& on_success, 
+        failure_callback_t& on_failure,
+        Requirements requirements
     )
     {
         try 
@@ -117,7 +143,7 @@ namespace ic::p2p
             if (is_msgpack_valid(msg) && is_msgpack_valid_type(msg, type))
             {
                 for (const auto& requirement : requirements)
-                    check_requirement(msg[requirement.name], requirement);
+                    check_requirement(requirement.name, msg[requirement.name], requirement);
                 on_success(msg);
             }
         }
@@ -147,6 +173,6 @@ namespace ic::p2p
 
     mp::MsgPack recv_msg(tacopie::tcp_socket& socket, size_t max_size)
     {
-        return p2p::bytearray_to_msgpack(socket.recv(200));
+        return p2p::bytearray_to_msgpack(socket.recv(max_size));
     }
 }

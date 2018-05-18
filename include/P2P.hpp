@@ -17,6 +17,7 @@ namespace tacopie
 namespace ic::p2p
 {
     namespace mp = msgpack11;
+    std::string msgpack_type_to_string(mp::MsgPack::Type type);
     using additional_check_t = std::function<bool(const mp::MsgPack&)>;
     struct Requirement
     {
@@ -28,6 +29,7 @@ namespace ic::p2p
         Requirement(const std::string& name, mp::MsgPack::Type type);
         Requirement(const std::string& name, mp::MsgPack::Type type, additional_check_t check);
     };
+    using Requirements = std::vector<Requirement>;
 
     mp::MsgPack string_to_msgpack(const std::string& msg);
     mp::MsgPack bytearray_to_msgpack(const std::vector<char>& msg);
@@ -36,13 +38,13 @@ namespace ic::p2p
     bool is_msgpack_valid_type(const mp::MsgPack& msg, const std::string& type);
     using success_callback_t = const std::function<void(const mp::MsgPack&)>;
     using failure_callback_t = const std::function<void()>;
-    bool check_requirement(const mp::MsgPack& msg, Requirement req);
+    bool check_requirement(const std::string& name, const mp::MsgPack& msg, Requirement req);
     void use_msg(
         const mp::MsgPack& msg, 
         const std::string& type, 
-        success_callback_t on_success, 
-        failure_callback_t on_failure,
-        std::vector<Requirement> requirements = {}
+        success_callback_t& on_success, 
+        failure_callback_t& on_failure,
+        Requirements requirements = {}
     );
     mp::MsgPack build_msg(const std::string& type, mp::MsgPack::object fields = {});
     void send_msg(tacopie::tcp_socket& socket, const mp::MsgPack& msg);

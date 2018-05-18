@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include "msgpack11/msgpack11.hpp"
 
 namespace ic::except
 {
@@ -24,4 +25,16 @@ namespace ic::except
 
     struct TypeMismatchException : public Exception
     { TypeMismatchException(const std::string& expected_type, const std::string& real_type); };
+
+    struct MessageRequirementException : public Exception
+    { MessageRequirementException(const std::string& name, const std::string& expected_type, const std::string& real_type); };
+
+    struct MessageRequirementCustomCheckException : public Exception
+    { MessageRequirementCustomCheckException(const std::string& name); };
+
+    struct InvalidTransactionException : public Exception
+    { InvalidTransactionException(const std::string& tx_repr); };
+
+    struct InvalidRewardAmount : public Exception
+    { InvalidRewardAmount(float amount); };
 }

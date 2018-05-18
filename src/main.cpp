@@ -16,6 +16,7 @@
 #include <Utils.hpp>
 
 #include <ed25519/fixedint.h>
+#include "base58/base58.hpp"
 
 std::condition_variable cv;
 
@@ -74,12 +75,21 @@ int main(int argc, char** argv)
         port = ic::config::DEFAULT_PORT;
     }
     Tracker tracker(port);
-    /*vili::ViliParser config_file;
+    vili::ViliParser config_file;
     config_file.parseFile("config.vili");
     for (const vili::DataNode* ip : config_file.at<vili::ArrayNode>("ips"))
-        tracker.add_node(Node(ip->get<std::string>()));*/
+        tracker.add_node(Node(ip->get<std::string>()));
 
-    const unsigned int prefix_size = cmdl("prefix").str().size();
+
+    Wallet myWallet;
+    Wallet myWallet2;
+    Transaction tx(myWallet, myWallet2, 3.5);
+    tx.corrupt();
+    tx.validate();
+
+    tracker.propagate(tx.to_msgpack());
+
+    /*const unsigned int prefix_size = cmdl("prefix").str().size();
 
     std::cout << sizeof(uint32_t) << " or " << sizeof(int) << std::endl;
 
@@ -114,7 +124,7 @@ int main(int argc, char** argv)
     }
 
     const std::string merkle_root = char_array_to_hex(Transaction::get_merkel_root(sgns));
-    std::cout << "Merkel Root is : " << merkle_root << std::endl;
+    std::cout << "Merkel Root is : " << merkle_root << std::endl;*/
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);

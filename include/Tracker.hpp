@@ -20,5 +20,7 @@ namespace ic
         Tracker(unsigned int port = 15317);
         void add_node(Node node);
         void propagate(const mp::MsgPack& msg);
+        void handle_message(tacopie::tcp_client& client, const mp::MsgPack& msg);
+        bool contains_node(Node node);
     };
 }

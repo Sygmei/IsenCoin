@@ -27,5 +27,18 @@ namespace ic::except
     Exception(fmt::format("Not an IsenCoin Message : {}", msg)) {}
 
     TypeMismatchException::TypeMismatchException(const std::string& expected_type, const std::string& real_type) :
-    Exception(fmt::format("IsenCoin Message Type Mismatch (Expected : '{}', Got : '{}'", expected_type, real_type)) {}
+    Exception(fmt::format("IsenCoin Message Type Mismatch (Expected : '{}', Got : '{}')", expected_type, real_type)) {}
+
+    MessageRequirementException::MessageRequirementException(const std::string& name, const std::string& expected_type, const std::string& real_type) :
+    Exception(fmt::format("IsenCoin Message Requirement Check Failed for field '{}' (Expected : '{}', Got : '{}')", name, expected_type, real_type)) {}
+
+    MessageRequirementCustomCheckException::MessageRequirementCustomCheckException(const std::string& name) :
+    Exception(fmt::format("Custom Check for Message field {} did not pass", name)) {}
+
+    InvalidTransactionException::InvalidTransactionException(const std::string& tx_repr) :
+    Exception((fmt::format("Invalid Transaction : {}", tx_repr))) {}
+
+    InvalidRewardAmount::InvalidRewardAmount(float amount) : 
+    Exception(fmt::format("Invalid IsenCoin Reward Amount : {} (Normal reward is {})", amount, config::ISENCOIN_REWARD))
+    {}
 }
