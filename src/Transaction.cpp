@@ -47,6 +47,16 @@ namespace ic
         std::cout << this->as_string() << std::endl;
     }
 
+    Transaction::Transaction(const public_key_t& sender, const public_key_t& receiver, const amount_t amount, const timestamp_t timestamp,
+                             const signature_t& signature)
+    {
+        m_sender = sender;
+        m_receiver = receiver;
+        m_amount = amount;
+        m_timestamp = timestamp;
+        m_signature = signature;
+    }
+
     void Transaction::validate()
     {
         std::string tx_sign_message = this->get_signable_transaction_message();
@@ -54,6 +64,7 @@ namespace ic
         std::cout << "TSM Size : " << tx_sign_message.size() << std::endl;
         if (ed25519_verify(m_signature.data(), reinterpret_cast<const unsigned char*>(tx_sign_message.c_str()), tx_sign_message.size(), m_sender.data()))
         {
+            Log->info("Valid Transaction ! {}", this->as_string());
             if (m_sender == config::ISENCOIN_NULL_ADDRESS && m_amount != config::ISENCOIN_REWARD)
             {
                 throw except::InvalidRewardAmount(m_amount);
@@ -133,7 +144,7 @@ namespace ic
 
     void Transaction::corrupt()
     {
-        //m_amount += 1;
+        m_amount += 1;
         //m_timestamp += 1;
         //m_sender[31] = m_sender[11];
         //m_receiver[0] = 0;

@@ -4,18 +4,18 @@
 #include <string>
 
 #include <P2P.hpp>
+#include <Types.hpp>
 #include <Wallet.hpp>
 
 namespace ic
 {
     namespace mp = msgpack11;
-    using signature_t = std::array<unsigned char, 64>;
     class Transaction 
     {
     private:
         signature_t m_signature;
-        uint32_t m_timestamp;
-        float m_amount;
+        timestamp_t m_timestamp;
+        amount_t m_amount;
         public_key_t m_sender;
         public_key_t m_receiver;
         std::string get_signable_transaction_message();
@@ -23,11 +23,12 @@ namespace ic
         static signature_t get_merkel_root(const std::vector<signature_t>& signatures);
         static signature_t combine(const signature_t& signature1, const signature_t& signature2);
         Transaction(const Wallet& sender, const Wallet& receiver, float amount);
+        Transaction(const public_key_t& sender, const public_key_t& receiver, amount_t amount, timestamp_t timestamp, const signature_t& signature);
         void validate();
         const signature_t& get_signature() const;
         std::string get_printable_signature() const;
-        uint32_t get_timestamp() const;
-        float get_amount() const;
+        timestamp_t get_timestamp() const;
+        amount_t get_amount() const;
         const public_key_t& get_sender() const;
         const public_key_t& get_receiver() const;
         mp::MsgPack to_msgpack() const;

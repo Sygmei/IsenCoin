@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include <ArrayNode.hpp>
-#include <ComplexNode.hpp>
-#include <ContainerNode.hpp>
-#include <DataNode.hpp>
+#include "ArrayNode.hpp"
+#include "ComplexNode.hpp"
+#include "ContainerNode.hpp"
+#include "DataNode.hpp"
 
 namespace vili
 {

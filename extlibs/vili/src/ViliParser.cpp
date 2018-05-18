@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include <Functions.hpp>
-#include <ViliParser.hpp>
+#include "Functions.hpp"
+#include "ViliParser.hpp"
 
 namespace
 {

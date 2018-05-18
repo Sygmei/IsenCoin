@@ -2,11 +2,10 @@
 
 #include <array>
 
+#include <Types.hpp>
+
 namespace ic
 {
-    using private_key_t = std::array<unsigned char, 64>;
-    using public_key_t = std::array<unsigned char, 32>;
-
     class Wallet
     {
     private:
@@ -24,6 +23,6 @@ namespace ic
         public_key_t get_public_key() const;
 
         void send(const Wallet& wallet, float amount);
-        operator public_key_t();
+        operator public_key_t() const;
     };
 }

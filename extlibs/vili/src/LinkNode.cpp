@@ -1,7 +1,7 @@
 #include <fstream>
 
-#include <Functions.hpp>
-#include <LinkNode.hpp>
+#include "Functions.hpp"
+#include "LinkNode.hpp"
 
 namespace vili
 {

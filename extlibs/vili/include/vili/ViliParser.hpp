@@ -1,7 +1,7 @@
 #pragma once
 
-#include <ComplexNode.hpp>
-#include <NodeTemplate.hpp>
+#include "ComplexNode.hpp"
+#include "NodeTemplate.hpp"
 
 namespace vili
 {

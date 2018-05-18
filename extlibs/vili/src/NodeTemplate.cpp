@@ -1,4 +1,4 @@
-#include <NodeTemplate.hpp>
+#include "NodeTemplate.hpp"
 
 namespace vili
 {

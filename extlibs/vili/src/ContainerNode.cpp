@@ -1,4 +1,4 @@
-#include <vili/ContainerNode.hpp>
+#include "ContainerNode.hpp"
 
 namespace vili
 {

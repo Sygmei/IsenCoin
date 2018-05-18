@@ -5,6 +5,7 @@
 #include <Message.hpp>
 #include <P2P.hpp>
 #include <Transaction.hpp>
+#include "base58/base58.hpp"
 
 namespace ic 
 {
@@ -94,7 +95,22 @@ namespace ic
         // @On "Transaction" Message
         p2p::use_msg(msg, "transaction", [&](const auto& msg)
         {
-            Log->error("TRANSACTION SUCCESS");
+            std::vector<unsigned char> t_sender;
+            base58::decode(msg["sender"].string_value(), t_sender);
+            std::vector<unsigned char> t_receiver;
+            base58::decode(msg["receiver"].string_value(), t_receiver);
+            amount_t f_amount = msg["amount"].float32_value();
+            timestamp_t f_timestamp = msg["timestamp"].uint32_value();
+            std::vector<unsigned char> t_signature;
+            base58::decode(msg["signature"].string_value(), t_signature);
+            public_key_t f_sender;
+            std::copy(t_sender.begin(), t_sender.end(), f_sender.begin());
+            public_key_t f_receiver;
+            std::copy(t_receiver.begin(), t_receiver.end(), f_receiver.begin());
+            signature_t f_signature;
+            std::copy(t_signature.begin(), t_signature.end(), f_signature.begin());
+            Transaction tx(f_sender, f_receiver, f_amount, f_timestamp, f_signature);
+            tx.validate();
         }, [&]()
         {
             Log->warn("(Server) Received invalid Transaction : {}", client.get_host(), client.get_port(), msg.dump());

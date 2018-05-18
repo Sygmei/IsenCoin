@@ -1,6 +1,6 @@
 #pragma once
 
-#include <LinkNode.hpp>
+#include "LinkNode.hpp"
 
 namespace vili
 {

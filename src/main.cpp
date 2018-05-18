@@ -84,7 +84,6 @@ int main(int argc, char** argv)
     Wallet myWallet;
     Wallet myWallet2;
     Transaction tx(myWallet, myWallet2, 3.5);
-    tx.corrupt();
     tx.validate();
 
     tracker.propagate(tx.to_msgpack());
