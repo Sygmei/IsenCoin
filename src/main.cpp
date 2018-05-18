@@ -14,6 +14,7 @@
 #include <Tracker.hpp>
 #include <Transaction.hpp>
 #include <Utils.hpp>
+#include <Serialize.hpp>
 
 #include <ed25519/fixedint.h>
 #include "base58/base58.hpp"
@@ -27,6 +28,7 @@ signint_handler(int) {
 
 int main(int argc, char** argv)
 {
+	GOOGLE_PROTOBUF_VERIFY_VERSION;
     tacopie::init();
 
     argh::parser cmdl;
@@ -122,6 +124,14 @@ int main(int argc, char** argv)
         sgns.emplace_back(tx.get_signature());
     }
 
+	// Serialization
+	long long nbFiles = 0;
+	FileSer StockDataChain;
+	BlockSer StockDataBlock;
+	Block block;
+	block.set_transaction(txs);
+	WriteData(nbFiles, StockDataChain, StockDataBlock, block);
+
     const std::string merkle_root = char_array_to_hex(Transaction::get_merkel_root(sgns));
     std::cout << "Merkel Root is : " << merkle_root << std::endl;*/
 
@@ -131,5 +141,6 @@ int main(int argc, char** argv)
 
     tacopie::close();
 
+	google::protobuf::ShutdownProtobufLibrary();
     return 0;
 }

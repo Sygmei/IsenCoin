@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+message TransactionSer {
+    bytes sender = 1;
+    bytes receiver = 2;
+    uint32 timestamp  = 3;
+    float amout = 4;
+    bytes signature = 5;
+}
+
+message BlockSer {
+    repeated TransactionSer transaction = 1;
+    int32 current_hash = 2;
+    int32 previous_hash = 3;
+    int32 time = 4;
+}
+
+message FileSer {
+    repeated BlockSer block = 1;
+}

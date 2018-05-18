@@ -11,6 +11,7 @@ add_subdirectory(extlibs/spdlog)
 add_subdirectory(extlibs/vili)
 
 find_package(Threads REQUIRED)
+find_package(protobuf REQUIRED)
 
 file(GLOB ISENCOIN_HEADERS include/*.hpp)
 file(GLOB ISENCOIN_SOURCES src/*.cpp)
@@ -25,6 +26,7 @@ target_link_libraries(isencoin fmt)
 target_link_libraries(isencoin spdlog)
 target_link_libraries(isencoin vili)
 target_link_libraries(isencoin Threads::Threads)
+target_link_libraries(isencoin protobuf::libprotobuf-lite protobuf::libprotobuf protobuf::libprotoc)
 
 target_include_directories(isencoin
     PUBLIC 

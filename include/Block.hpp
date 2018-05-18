@@ -17,5 +17,10 @@ namespace ic
         int m_time = 0;    
     public:
         void validate();
+		const int& get_current_hash() const;
+		const int& get_previous_hash() const;
+		const int& get_time() const;
+		const std::vector<Transaction>& get_transactions() const;
+		void set_transaction(std::vector<Transaction> transactions);
     };
 }

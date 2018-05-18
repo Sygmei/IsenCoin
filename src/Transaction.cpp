@@ -100,6 +100,9 @@ namespace ic
         sha512(input.data(), input.size(), result.data());
         return result;
     }
+
+
+	// Getter
     
     const signature_t& Transaction::get_signature() const
     {
