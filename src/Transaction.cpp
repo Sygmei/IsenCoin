@@ -66,9 +66,9 @@ namespace ic
         {
             Log->info("Valid Transaction ! {}", this->as_string());
             if (m_sender == config::ISENCOIN_NULL_ADDRESS && m_amount != config::ISENCOIN_REWARD)
-            {
-                throw except::InvalidRewardAmount(m_amount);
-            }
+                throw except::InvalidRewardAmountException(m_amount);
+            if (m_amount < 0)
+                throw except::NegativeAmountException(m_amount);
         }
         else
             throw except::InvalidTransactionException(this->as_string());

@@ -35,6 +35,9 @@ namespace ic::except
     struct InvalidTransactionException : public Exception
     { InvalidTransactionException(const std::string& tx_repr); };
 
-    struct InvalidRewardAmount : public Exception
-    { InvalidRewardAmount(float amount); };
+    struct InvalidRewardAmountException : public Exception
+    { InvalidRewardAmountException(float amount); };
+
+    struct NegativeAmountException : public Exception 
+    { NegativeAmountException(float amount); };
 }

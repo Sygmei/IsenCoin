@@ -38,7 +38,9 @@ namespace ic::except
     InvalidTransactionException::InvalidTransactionException(const std::string& tx_repr) :
     Exception((fmt::format("Invalid Transaction : {}", tx_repr))) {}
 
-    InvalidRewardAmount::InvalidRewardAmount(float amount) : 
-    Exception(fmt::format("Invalid IsenCoin Reward Amount : {} (Normal reward is {})", amount, config::ISENCOIN_REWARD))
-    {}
+    InvalidRewardAmountException::InvalidRewardAmountException(float amount) : 
+    Exception(fmt::format("Invalid IsenCoin Reward Amount : {} (Normal reward is {})", amount, config::ISENCOIN_REWARD)) {}
+
+    NegativeAmountException::NegativeAmountException(float amount) :
+    Exception(fmt::format("Invalid Transaction Amount : {}", amount)) {}
 }
