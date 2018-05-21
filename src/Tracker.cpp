@@ -13,7 +13,7 @@ namespace ic
     {
         Log->info("Starting Tracker using port {}", port);
         m_port = port;
-        m_server.start("127.0.0.1", m_port, [&] (const std::shared_ptr<tacopie::tcp_client>& client) -> bool {
+        m_server.start("localhost", m_port, [&] (const std::shared_ptr<tacopie::tcp_client>& client) -> bool {
             Node node(client->get_socket().get_host(), client->get_socket().get_port());
             Log->info("(Server) New client connected {}:{}", node.get_address(), node.get_port());
             mp::MsgPack msg = p2p::recv_msg(client->get_socket(), 4096);
