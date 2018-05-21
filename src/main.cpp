@@ -79,10 +79,13 @@ int main(int argc, char** argv)
     myWallet.generate(cmdl("prefix").str());
     myWallet2.generate(cmdl("prefix2").str());
 
-    Transaction tx(myWallet, myWallet2, 3.5);
-    tx.validate();
-
-    tracker.propagate(tx.to_msgpack());
+    for (unsigned int i = 1; i < 10; i++)
+    {
+        Transaction tx(myWallet, myWallet2, i);
+        tx.validate();
+        tracker.propagate(tx.to_msgpack());
+    }
+        
 
     Chain chain;
 

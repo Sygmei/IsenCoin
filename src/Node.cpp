@@ -2,7 +2,7 @@
 
 #include <Functions.hpp>
 #include <Logger.hpp>
-#include <Nodei.hpp>
+#include <Node.hpp>
 #include <Exceptions.hpp>
 
 namespace ic 
