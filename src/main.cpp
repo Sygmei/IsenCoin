@@ -39,23 +39,6 @@ int main(int argc, char** argv)
     using namespace msgpack11;
 
     initialize_logger();
-
-    MsgPack my_msgpack = MsgPack::object {
-        { "key1", "value1" },
-        { "key2", false },
-        { "key3", MsgPack::array { 1, 2, 3 } },
-    };
-    
-    //access to elements
-    std::cout << my_msgpack["key1"].string_value() << std::endl;
-    
-    //serialize
-    std::string msgpack_bytes = my_msgpack.dump();
-    std::cout << "Bytes : " << msgpack_bytes << std::endl;
-    
-    //deserialize
-    std::string err;
-    MsgPack des_msgpack = MsgPack::parse(msgpack_bytes, err);
     
     unsigned int port;
     if (cmdl("port"))
@@ -121,7 +104,7 @@ int main(int argc, char** argv)
         sgns.emplace_back(tx.get_signature());
     }
     Block blk = txs;
-    blk.mine(8);
+    //blk.mine(8);
 
     signature_t merkle_root = Transaction::get_merkel_root(sgns);
     const std::string merkle_root_str = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());

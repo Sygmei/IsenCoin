@@ -7,7 +7,7 @@ file(GLOB_RECURSE TACOPIE_SOURCES src/*.cpp)
 
 add_library(tacopie ${TACOPIE_HEADERS} ${TACOPIE_SOURCES})
 
-#target_compile_definitions(tacopie PUBLIC __TACOPIE_LOGGING_ENABLED)
+target_compile_definitions(tacopie PUBLIC __TACOPIE_LOGGING_ENABLED)
 target_include_directories(tacopie
     PUBLIC 
         $<INSTALL_INTERFACE:include>
