@@ -43,4 +43,7 @@ namespace ic::except
 
     NegativeAmountException::NegativeAmountException(float amount) :
     Exception(fmt::format("Invalid Transaction Amount : {}", amount)) {}
+
+    InvalidBlockException::InvalidBlockException() : 
+    Exception(fmt::format("Can't manipulate Invalid Block (mine it before manipulation)")) {}
 }

@@ -1,4 +1,5 @@
 #include <fmt/format.h>
+#include <msgpack11/msgpack11.hpp>
 
 #include <Functions.hpp>
 #include <Logger.hpp>
@@ -7,7 +8,13 @@
 
 namespace ic 
 {
-    bool Node::is_address_valid()
+    namespace mp = msgpack11;
+    p2p::Requirements Node::Fields = {
+        { "host", mp::MsgPack::Type::STRING },
+        { "port", mp::MsgPack::Type::UINT16 },
+    };
+
+    bool Node::is_address_valid() const
     {
         std::vector<std::string> splitted_ip = utils::split(m_address, ".");
         if (splitted_ip.size() != 4) return false;
@@ -36,6 +43,11 @@ namespace ic
         m_port = std::stoi(splitted_ip[1]);
         if (!is_address_valid())
             throw except::InvalidIpAddressException(address_and_port);
+    }
+
+    bool Node::operator==(const Node& node) const
+    {
+        return (m_address == m_address && m_port == m_port);
     }
 
     const std::string& Node::get_address() const

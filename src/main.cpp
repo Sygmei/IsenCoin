@@ -49,7 +49,7 @@ int main(int argc, char** argv)
         }
         catch (const std::invalid_argument& e)
         {
-            Log->warn("Invalid port : \"{}\", using default port 15317", cmdl("port").str());
+            Log->warn("Invalid port : \"{}\", using default port 15317 ({})", cmdl("port").str(), e.what());
             port = ic::config::DEFAULT_PORT;
         }
     }
@@ -68,18 +68,18 @@ int main(int argc, char** argv)
 
     std::cout << "Starting IsenCoin Program..." << std::endl;
     std::cout << "Benchmarking Wallet creation..." << std::endl;
-    const unsigned int prefix_size = cmdl("prefix").str().size();
-    const unsigned long long int input_seconds = (double(std::pow(58, prefix_size)) * Wallet::Benchmark()) / 1000000.0;
-    const unsigned int days = input_seconds / 60 / 60 / 24;
-    const unsigned int hours = (input_seconds / 60 / 60) % 24;
-    const unsigned int minutes = (input_seconds / 60) % 60;
-    const unsigned int seconds = input_seconds % 60;
+    const size_t prefix_size = cmdl("prefix").str().size();
+    const uint64_t input_seconds = (double(std::pow(58, prefix_size)) * Wallet::Benchmark()) / 1000000.0;
+    const uint64_t days = input_seconds / 60 / 60 / 24;
+    const uint64_t hours = (input_seconds / 60 / 60) % 24;
+    const uint64_t minutes = (input_seconds / 60) % 60;
+    const uint64_t seconds = input_seconds % 60;
     std::cout << "Asked prefix will take approximatively " << days << "d " << hours << "h " << minutes << "m " << seconds << "s" << std::endl;
 
     myWallet.generate(cmdl("prefix").str());
     myWallet2.generate(cmdl("prefix2").str());
 
-    for (unsigned int i = 1; i < 10; i++)
+    for (unsigned int i = 1; i < 3; i++)
     {
         Transaction tx(myWallet, myWallet2, i);
         tx.validate();
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 
     Chain chain;
 
-    /*auto pub = myWallet.get_public_key();
+    auto pub = myWallet.get_public_key();
     std::string str_pub(std::begin(pub), std::end(pub));
 
     std::vector<Transaction> txs;
@@ -103,10 +103,13 @@ int main(int argc, char** argv)
         tx.validate();
         sgns.emplace_back(tx.get_signature());
     }
-    Block blk = txs;
-    //blk.mine(8);
+    Block genesis;
+    genesis.mine(8);
+    Log->error("Genesis found !");
+    Block blk(genesis, txs);
+    blk.mine(8);
 
-    signature_t merkle_root = Transaction::get_merkel_root(sgns);
+    /*signature_t merkle_root = Transaction::get_merkel_root(sgns);
     const std::string merkle_root_str = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());
     std::cout << "Merkel Root is : " << merkle_root_str << std::endl;*/
 

@@ -40,4 +40,7 @@ namespace ic::except
 
     struct NegativeAmountException : public Exception 
     { NegativeAmountException(float amount); };
+
+    struct InvalidBlockException : public Exception
+    { InvalidBlockException(); };
 }

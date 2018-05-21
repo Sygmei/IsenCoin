@@ -72,8 +72,8 @@ namespace ic
             }
             catch (const std::exception& e)
             {
-                // REMOVE STALLED NODE
                 Log->error("Failed to connect to {}:{} (Reason : {})", node.get_address(), node.get_port(), e.what());
+                m_nodes.erase(std::remove(m_nodes.begin(), m_nodes.end(), node), m_nodes.end());
             }
         }
     }
@@ -114,8 +114,17 @@ namespace ic
             tx.validate();
         }, [&]()
         {
-            Log->warn("(Server) Received invalid Transaction : {}", client.get_host(), client.get_port(), msg.dump());
+            Log->warn("(Server) Received invalid Transaction from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());
         }, Transaction::Fields);
+        // @On "AddPeer" Message
+        p2p::use_msg(msg, "peer", [&](const auto& msg)
+        {
+            Node new_peer(msg["host"].string_value(), msg["port"].uint16_value());
+            this->add_node(new_peer);
+        }, [&]()
+        {
+            Log->warn("(Server) Received invalid Peer from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());
+        }, Node::Fields);
     }
 
     bool Tracker::contains_node(Node node)

@@ -33,7 +33,7 @@ namespace ic
         m_receiver = receiver.get_public_key();
         m_amount = amount;
         std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
-        m_timestamp = std::chrono::duration_cast<std::chrono::seconds>(tp.time_since_epoch()).count();
+        m_timestamp = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
 
         std::string tx_sign_message = this->get_signable_transaction_message();
         ed25519_sign(
@@ -111,7 +111,7 @@ namespace ic
         return char_array_to_hex(m_signature);
     }
 
-    uint32_t Transaction::get_timestamp() const
+    timestamp_t Transaction::get_timestamp() const
     {
         return m_timestamp;
     }
@@ -178,6 +178,7 @@ namespace ic
     signature_t Transaction::get_merkel_root(const std::vector<signature_t>& signatures)
     {
         std::vector<signature_t> signatures_out = signatures;
+
         std::sort(signatures_out.begin(), signatures_out.end(), [](const signature_t& a, const signature_t& b)
         {
             return (a < b);
@@ -195,12 +196,12 @@ namespace ic
                 std::cout << "Even amount of signatures, copying last one..." << std::endl;
                 signatures_out.push_back(signatures_out.back());
             }
-            for (unsigned int i = 0; i < signatures_out.size(); i+= 2)
+            for (unsigned int i = 0; i < signatures_out.size(); i += 2)
             {
                 signature_t& combine_result = signatures_buffer.emplace_back(Transaction::combine(signatures_out[i], signatures_out[i + 1]));
-                std::cout << "Combine : " 
-                    << base58::encode(signatures_out[i].data(), signatures_out[i].data() + signatures_out[i].size()) 
-                    << " and " 
+                std::cout << "Combine : "
+                    << base58::encode(signatures_out[i].data(), signatures_out[i].data() + signatures_out[i].size())
+                    << " and "
                     << base58::encode(signatures_out[i + 1].data(), signatures_out[i + 1].data() + signatures_out[i + 1].size()) << std::endl;
 
                 std::cout << "  => Got signature : " << base58::encode(combine_result.data(), combine_result.data() + combine_result.size()) << std::endl;
