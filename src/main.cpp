@@ -121,7 +121,7 @@ int main(int argc, char** argv)
         sgns.emplace_back(tx.get_signature());
     }
     Block blk = txs;
-    blk.mine(8);
+    //blk.mine(8);
 
     signature_t merkle_root = Transaction::get_merkel_root(sgns);
     const std::string merkle_root_str = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());
