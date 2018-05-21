@@ -178,6 +178,10 @@ namespace ic
     signature_t Transaction::get_merkel_root(const std::vector<signature_t>& signatures)
     {
         std::vector<signature_t> signatures_out = signatures;
+        std::sort(signatures_out.begin(), signatures_out.end(), [](const signature_t& a, const signature_t& b)
+        {
+            return (a < b);
+        });
         if (signatures_out.empty())
         {
             throw std::runtime_error("Can't get merkle root of empty signatures vector");
@@ -188,15 +192,18 @@ namespace ic
             signature_t even_signature;
             if (signatures_out.size() % 2 != 0)
             {
-                std::cout << "Even amount of signatures, excluding last one..." << std::endl;
-                signatures_buffer.push_back(signatures_out.front());
-                signatures_out.erase(signatures_out.begin());
+                std::cout << "Even amount of signatures, copying last one..." << std::endl;
+                signatures_out.push_back(signatures_out.back());
             }
             for (unsigned int i = 0; i < signatures_out.size(); i+= 2)
             {
-                signatures_buffer.push_back(Transaction::combine(signatures_out[i], signatures_out[i + 1]));
-                std::cout << "Combine : " << char_array_to_hex(signatures_out[i]) << " and " << char_array_to_hex(signatures_out[i + 1]) << std::endl;
-                std::cout << "  => Got signature : " << char_array_to_hex(Transaction::combine(signatures_out[i], signatures_out[i + 1])) << std::endl;
+                signature_t& combine_result = signatures_buffer.emplace_back(Transaction::combine(signatures_out[i], signatures_out[i + 1]));
+                std::cout << "Combine : " 
+                    << base58::encode(signatures_out[i].data(), signatures_out[i].data() + signatures_out[i].size()) 
+                    << " and " 
+                    << base58::encode(signatures_out[i + 1].data(), signatures_out[i + 1].data() + signatures_out[i + 1].size()) << std::endl;
+
+                std::cout << "  => Got signature : " << base58::encode(combine_result.data(), combine_result.data() + combine_result.size()) << std::endl;
             }
             signatures_out = signatures_buffer;
             signatures_buffer.clear();

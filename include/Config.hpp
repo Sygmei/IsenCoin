@@ -8,6 +8,7 @@ namespace ic::config
     constexpr uint16_t DEFAULT_PORT = 15317;
     constexpr uint8_t ISENCOIN_VERSION = 1;
     constexpr float ISENCOIN_REWARD = 10;
+    constexpr uint8_t ISENCOIN_DIFFICULTY = 6;
     constexpr std::array<unsigned char, 32> ISENCOIN_NULL_ADDRESS = {};
     namespace tx_field_chars
     {

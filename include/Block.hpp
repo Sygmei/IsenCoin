@@ -11,11 +11,18 @@ namespace ic
     private:
         std::vector<Transaction> m_transactions;
         int depth = 0;
-        int nonce = 0;
-        int m_current_hash = 0;
-        int m_previous_hash = 0;
-        int m_time = 0;    
+        unsigned long long int m_nonce = 0;
+        signature_t m_previous_hash;
+        signature_and_nonce_t merkle_root;
+        int m_time = 0;
+        bool m_validated = false;
+        bool is_nonce_valid(unsigned long long int nonce);
+        void calculate_merkle_root();
     public:
+        Block(std::vector<Transaction> transactions);
         void validate();
+        signature_t get_hash(unsigned long long int nonce);
+        signature_t get_hash();
+        void mine(uint8_t threads);
     };
 }
