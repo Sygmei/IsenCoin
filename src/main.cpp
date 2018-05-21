@@ -82,14 +82,11 @@ int main(int argc, char** argv)
     Transaction tx(myWallet, myWallet2, 3.5);
     tx.validate();
 
-    //tracker.propagate(tx.to_msgpack());
-
-    std::cout << sizeof(uint32_t) << " or " << sizeof(int) << std::endl;
+    tracker.propagate(tx.to_msgpack());
 
     Chain chain;
-    //chain.create_wallet();
 
-    auto pub = myWallet.get_public_key();
+    /*auto pub = myWallet.get_public_key();
     std::string str_pub(std::begin(pub), std::end(pub));
 
     std::vector<Transaction> txs;
@@ -108,7 +105,7 @@ int main(int argc, char** argv)
 
     signature_t merkle_root = Transaction::get_merkel_root(sgns);
     const std::string merkle_root_str = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());
-    std::cout << "Merkel Root is : " << merkle_root_str << std::endl;
+    std::cout << "Merkel Root is : " << merkle_root_str << std::endl;*/
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
