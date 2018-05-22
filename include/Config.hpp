@@ -10,9 +10,9 @@ namespace ic::config
     constexpr float ISENCOIN_REWARD = 10;
     constexpr uint8_t ISENCOIN_DIFFICULTY = 6;
 #ifdef _WIN32
-    constexpr char* DEFAULT_BIND = "";
+    constexpr const char* DEFAULT_BIND = "";
 #else
-    constexpr char* DEFAULT_BIND = "localhost";
+    constexpr const char* DEFAULT_BIND = "localhost";
 #endif
     constexpr std::array<unsigned char, 32> ISENCOIN_NULL_ADDRESS = {};
     namespace tx_field_chars

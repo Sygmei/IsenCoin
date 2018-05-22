@@ -21,7 +21,7 @@ namespace ic
     namespace mp = msgpack11;
     p2p::Requirements Transaction::Fields = {
         { "signature", mp::MsgPack::Type::STRING },
-        { "timestamp", mp::MsgPack::Type::UINT32 },
+        { "timestamp", mp::MsgPack::Type::UINT64 },
         { "amount", mp::MsgPack::Type::FLOAT32 },
         { "sender", mp::MsgPack::Type::STRING },
         { "receiver", mp::MsgPack::Type::STRING }

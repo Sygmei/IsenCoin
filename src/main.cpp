@@ -40,6 +40,8 @@ int main(int argc, char** argv)
 
     initialize_logger();
     
+    Log->critical("Size of uint64_t : {}", sizeof(uint64_t));
+
     unsigned int port;
     if (cmdl("port"))
     {
