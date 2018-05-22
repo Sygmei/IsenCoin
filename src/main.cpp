@@ -81,15 +81,12 @@ int main(int argc, char** argv)
     myWallet.generate(cmdl("prefix").str());
     myWallet2.generate(cmdl("prefix2").str());
 
-    for (unsigned int i = 1; i < 3; i++)
-    {
-        Transaction tx(myWallet, myWallet2, i);
-        tx.validate();
-        tracker.propagate(tx.to_msgpack());
-    }
-        
+    
+    Transaction tx(myWallet, myWallet2, 22);
+    tx.validate();
+    tracker.propagate(tx.to_msgpack());
 
-    Chain chain;
+    /*Chain chain;
 
     auto pub = myWallet.get_public_key();
     std::string str_pub(std::begin(pub), std::end(pub));
@@ -104,12 +101,12 @@ int main(int argc, char** argv)
     {
         tx.validate();
         sgns.emplace_back(tx.get_signature());
-    }
-    Block genesis;
+    }*/
+    /*Block genesis;
     genesis.mine(8);
     Log->error("Genesis found !");
     Block blk(genesis, txs);
-    blk.mine(8);
+    blk.mine(8);*/
 
     /*signature_t merkle_root = Transaction::get_merkel_root(sgns);
     const std::string merkle_root_str = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());

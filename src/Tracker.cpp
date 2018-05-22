@@ -111,6 +111,7 @@ namespace ic
             signature_t f_signature;
             std::copy(t_signature.begin(), t_signature.end(), f_signature.begin());
             Transaction tx(f_sender, f_receiver, f_amount, f_timestamp, f_signature);
+            Log->debug("Validating Peer Transaction...");
             tx.validate();
         }, [&]()
         {
