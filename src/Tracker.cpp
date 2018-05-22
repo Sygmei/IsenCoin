@@ -101,7 +101,7 @@ namespace ic
             std::vector<unsigned char> t_receiver;
             base58::decode(msg["receiver"].string_value(), t_receiver);
             amount_t f_amount = msg["amount"].float32_value();
-            timestamp_t f_timestamp = msg["timestamp"].uint32_value();
+            timestamp_t f_timestamp = msg["timestamp"].uint64_value();
             std::vector<unsigned char> t_signature;
             base58::decode(msg["signature"].string_value(), t_signature);
             public_key_t f_sender;
