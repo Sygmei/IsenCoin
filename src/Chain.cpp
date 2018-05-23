@@ -3,11 +3,19 @@
 
 namespace ic
 {
-    Chain Blockchain;
+    std::unique_ptr<Chain> Chain::s_blockchain;
+    void Chain::Initialize_Blockchain()
+    {
+        s_blockchain = std::make_unique<Chain>();
+    }
+
+    Chain& Chain::Blockchain()
+    {
+        return *s_blockchain.get();
+    }
 
     Chain::Chain()
     {
-        initialize_logger();
         Log->debug("Creating Blockchain... Mining genesis...");
         m_current_block.mine(8);
     }

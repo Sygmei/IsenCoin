@@ -32,7 +32,7 @@ namespace ic
             mp::MsgPack msg;
             try
             {
-                client.connect(node.get_address(), node.get_port(), 5000);
+                client.connect(node.get_address(), node.get_port(), 100000);
                 Log->info("(Client) Connected to server {}:{}", node.get_address(), node.get_port());
             }
             catch (const std::exception& e)
@@ -115,11 +115,11 @@ namespace ic
             Transaction tx(f_sender, f_receiver, f_amount, f_timestamp, f_signature);
             Log->debug("Validating Peer Transaction...");
             tx.validate();
-            Blockchain.get_current_block().add_transaction(tx);
+            Chain::Blockchain().get_current_block().add_transaction(tx);
             std::thread mining_thread([](){ 
-                Blockchain.get_current_block().mine(8);
-                if (Blockchain.get_current_block().is_valid())
-                    Blockchain.create_new_block();
+                Chain::Blockchain().get_current_block().mine(8);
+                if (Chain::Blockchain().get_current_block().is_valid())
+                    Chain::Blockchain().create_new_block();
             });
         }, [&]()
         {

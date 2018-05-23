@@ -9,5 +9,5 @@ namespace ic
     namespace spd = spdlog;
     extern std::shared_ptr<spd::logger> Log;
 
-    void initialize_logger();
+    bool initialize_logger();
 }

@@ -25,6 +25,8 @@ signint_handler(int) {
   cv.notify_all();
 }
 
+bool ok_log = ic::initialize_logger();
+
 int main(int argc, char** argv)
 {
     tacopie::init();
@@ -38,7 +40,7 @@ int main(int argc, char** argv)
     using namespace ic;
     using namespace msgpack11;
 
-    initialize_logger();
+    Chain::Initialize_Blockchain();
 
     Log->critical("Size of uint64_t : {}", sizeof(uint64_t));
 

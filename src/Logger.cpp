@@ -6,7 +6,7 @@ namespace ic
 {
     std::shared_ptr<spd::logger> Log;
     
-    void initialize_logger()
+    bool initialize_logger()
     {
         auto dist_sink = std::make_shared<spdlog::sinks::dist_sink_st>();
         #if defined(_WIN32) || defined(_WIN64)
@@ -28,5 +28,7 @@ namespace ic
         Log->warn("<Warning>");
         Log->error("<Error>");
         Log->critical("<Critical>");
+
+        return true;
     }
 }
