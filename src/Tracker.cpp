@@ -121,6 +121,7 @@ namespace ic
                 if (Chain::Blockchain().get_current_block().is_valid())
                     Chain::Blockchain().create_new_block();
             });
+			mining_thread.detach();
         }, [&]()
         {
             Log->warn("(Server) Received invalid Transaction from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());

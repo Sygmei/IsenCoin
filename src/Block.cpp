@@ -62,9 +62,17 @@ namespace ic
         generate_timestamp();
     }
 
-    Block::Block(Block& previous_block, std::vector<Transaction> transactions)
+	Block::Block(const Block& block)
+	{
+		m_current_hash = block.m_current_hash;
+		m_nonce = block.m_nonce;
+		m_previous_hash = block.m_previous_hash;
+		m_timestamp = block.m_timestamp;
+	}
+
+    Block::Block(signature_t previous_hash, std::vector<Transaction> transactions)
     {
-        m_previous_hash = previous_block.get_hash();
+        m_previous_hash = previous_hash;
         m_transactions = transactions;
         generate_timestamp();
         fill_block_hash();
@@ -86,6 +94,7 @@ namespace ic
         m_validated = false;
         generate_timestamp();
         m_interrupt = true;
+		Log->error("Added new transaction");
     }
 
     void Block::validate()
@@ -117,6 +126,7 @@ namespace ic
 
     void Block::mine(uint8_t threads)
     {
+		m_interrupt = false;
         std::vector<std::thread> thread_pool;
         Log->debug("Starting mining");
         block_hash_t thread_base_hash = fill_block_hash();
@@ -138,9 +148,9 @@ namespace ic
                     {
                         m_nonce = nonce;
                         m_current_hash = thread_hash;
+						Log->trace("Validating BLOCK !");
+						m_validated = true;
                     }
-                    
-                    m_validated = true;
                 }
                 else
                 {
@@ -154,9 +164,14 @@ namespace ic
             }
         }
 
-        Log->warn("Mining ended with nonce {}", m_nonce);
-        const signature_t f_hash = get_hash();
-        Log->error("Resulting in following hash : {}", char_array_to_hex(f_hash));
+		if (!m_interrupt)
+		{
+			Log->warn("Mining ended with nonce {}", m_nonce);
+			const signature_t f_hash = get_hash();
+			Log->error("Resulting in following hash : {}", char_array_to_hex(f_hash));
+		}
+		else
+			m_interrupt = false;
     }
 
     bool Block::is_valid() const

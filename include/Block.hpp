@@ -23,7 +23,8 @@ namespace ic
         void generate_timestamp();
     public:
         Block();
-        Block(Block& previous_block, std::vector<Transaction> transactions = {});
+		Block(const Block& block);
+        Block(signature_t previous_block, std::vector<Transaction> transactions = {});
         Block(signature_t previous_hash, std::vector<Transaction> transactions = {}, uint64_t nonce = 0, timestamp_t timestamp = 0);
         void add_transaction(const Transaction& tx);
         void validate();
