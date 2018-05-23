@@ -9,9 +9,9 @@
 
 namespace ic 
 {
-    bool Block::is_nonce_valid(block_hash_t& block_hash, uint64_t nonce, timestamp_t timestamp)
+    bool Block::is_nonce_valid(block_hash_t& block_hash, uint64_t nonce)
     {
-        signature_t current_hash = Block::get_hash(block_hash, nonce, timestamp);
+        signature_t current_hash = Block::get_hash(block_hash, nonce);
         for (unsigned int i = 0; i < std::ceil(float(config::ISENCOIN_DIFFICULTY) / 2.0); i++)
         {
             //Log->trace("current_hash[{}] = {}", i, current_hash[i]);
@@ -25,6 +25,12 @@ namespace ic
                 return false;
         }
         return true;
+    }
+
+    void Block::generate_timestamp()
+    {
+        std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
+        m_timestamp = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
     }
 
     signature_t Block::calculate_merkle_root()
@@ -53,12 +59,14 @@ namespace ic
     {
         m_previous_hash = {};
         m_current_hash = {};
+        generate_timestamp();
     }
 
     Block::Block(Block& previous_block, std::vector<Transaction> transactions)
     {
         m_previous_hash = previous_block.get_hash();
         m_transactions = transactions;
+        generate_timestamp();
         fill_block_hash();
     }
 
@@ -72,18 +80,26 @@ namespace ic
         validate();
     }
 
+    void Block::add_transaction(const Transaction& tx)
+    {
+        m_transactions.push_back(tx);
+        m_validated = false;
+        generate_timestamp();
+        m_interrupt = true;
+    }
+
     void Block::validate()
     {
-        if (is_nonce_valid(m_current_hash, m_nonce, m_timestamp))
+        if (is_nonce_valid(m_current_hash, m_nonce))
             m_validated = true;
         else
             throw except::InvalidBlockException();
     }
 
-    signature_t Block::get_hash(block_hash_t& block_hash, uint64_t nonce, timestamp_t timestamp)
+    signature_t Block::get_hash(block_hash_t& block_hash, uint64_t nonce)
     {
         timestamp_t* timestamp_slot = reinterpret_cast<timestamp_t*>(block_hash.data() + 2 * sizeof(signature_t));
-        *timestamp_slot = timestamp;
+        *timestamp_slot = m_timestamp;
         uint64_t* nonce_slot = reinterpret_cast<uint64_t*>(block_hash.data() + 2 * sizeof(signature_t) + sizeof(timestamp_t));
         *nonce_slot = nonce;
         signature_t final_hash;
@@ -94,7 +110,7 @@ namespace ic
     signature_t Block::get_hash()
     {
         if (m_validated)
-            return Block::get_hash(m_current_hash, m_nonce, m_timestamp);
+            return Block::get_hash(m_current_hash, m_nonce);
         else
             throw except::InvalidBlockException();
     }
@@ -109,24 +125,27 @@ namespace ic
             thread_pool.emplace_back([&](block_hash_t thread_hash, uint8_t starting_index, uint8_t increment_level)
             {
                 unsigned long long nonce = starting_index;
-                
-                std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
-                timestamp_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
-                while (!m_validated && !is_nonce_valid(thread_hash, nonce, timestamp))
+  
+                while (!m_interrupt && !m_validated && !is_nonce_valid(thread_hash, nonce))
                 {
-                    tp = std::chrono::system_clock::now();
-                    timestamp = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
                     nonce += increment_level;
                     if ((nonce % 1000000) == 0)
                         Log->debug("Nonce : {} = {}", nonce, char_array_to_hex(thread_hash));
                 }
-                if (!m_validated)
+                if (!m_interrupt)
                 {
-                    m_nonce = nonce;
-                    m_current_hash = thread_hash;
-                    m_timestamp = timestamp;
+                    if (!m_validated)
+                    {
+                        m_nonce = nonce;
+                        m_current_hash = thread_hash;
+                    }
+                    
+                    m_validated = true;
                 }
-                m_validated = true;
+                else
+                {
+                    Log->warn("Current Block mining has been interrupted !");
+                }
             }, thread_base_hash, thread_index, threads);
         }
         for (std::thread &t : thread_pool) {
@@ -138,6 +157,11 @@ namespace ic
         Log->warn("Mining ended with nonce {}", m_nonce);
         const signature_t f_hash = get_hash();
         Log->error("Resulting in following hash : {}", char_array_to_hex(f_hash));
+    }
+
+    bool Block::is_valid() const
+    {
+        return m_validated;
     }
 }
 

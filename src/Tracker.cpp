@@ -1,5 +1,6 @@
 #include <Tracker.hpp>
 
+#include <Chain.hpp>
 #include <Config.hpp>
 #include <Logger.hpp>
 #include <Message.hpp>
@@ -80,6 +81,7 @@ namespace ic
 
     void Tracker::handle_message(tacopie::tcp_client& client, const mp::MsgPack& msg)
     {
+        static uint32_t active_mining_thread = 0;
         Log->debug("Msg Dump (r) : {}", msg.dump());
         // @On "Hello" Message
         p2p::use_msg(msg, "hello", [&](const auto& msg) {
@@ -113,6 +115,12 @@ namespace ic
             Transaction tx(f_sender, f_receiver, f_amount, f_timestamp, f_signature);
             Log->debug("Validating Peer Transaction...");
             tx.validate();
+            Blockchain.get_current_block().add_transaction(tx);
+            std::thread mining_thread([](){ 
+                Blockchain.get_current_block().mine(8);
+                if (Blockchain.get_current_block().is_valid())
+                    Blockchain.create_new_block();
+            });
         }, [&]()
         {
             Log->warn("(Server) Received invalid Transaction from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());
