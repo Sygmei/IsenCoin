@@ -7,6 +7,7 @@ namespace ic
 
     Chain::Chain()
     {
+        initialize_logger();
         Log->debug("Creating Blockchain... Mining genesis...");
         m_current_block.mine(8);
     }

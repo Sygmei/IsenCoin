@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     using namespace msgpack11;
 
     initialize_logger();
-    
+
     Log->critical("Size of uint64_t : {}", sizeof(uint64_t));
 
     unsigned int port;
