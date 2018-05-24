@@ -9,8 +9,11 @@ add_subdirectory(extlibs/tacopie)
 add_subdirectory(extlibs/fmt)
 add_subdirectory(extlibs/spdlog)
 add_subdirectory(extlibs/vili)
+add_subdirectory(extlibs/imgui)
 
 find_package(Threads REQUIRED)
+find_package(SFML 2 COMPONENTS graphics window system REQUIRED)
+find_package(OpenGL REQUIRED)
 
 file(GLOB ISENCOIN_HEADERS include/*.hpp)
 file(GLOB ISENCOIN_SOURCES src/*.cpp)
@@ -24,7 +27,12 @@ target_link_libraries(isencoin tacopie)
 target_link_libraries(isencoin fmt)
 target_link_libraries(isencoin spdlog)
 target_link_libraries(isencoin vili)
+target_link_libraries(isencoin imgui)
 target_link_libraries(isencoin Threads::Threads)
+if (SFML_FOUND)
+  target_link_libraries(isencoin sfml-window sfml-graphics sfml-system)
+  target_link_libraries(isencoin ${OPENGL_LIBRARIES})
+endif()
 
 target_include_directories(isencoin
     PUBLIC 

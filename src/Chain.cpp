@@ -18,6 +18,7 @@ namespace ic
     {
         Log->debug("Creating Blockchain... Mining genesis...");
         m_current_block.mine(8);
+        create_new_block();
     }
 
     Block& Chain::get_current_block()
@@ -34,7 +35,7 @@ namespace ic
         if (m_current_block.is_valid())
         {
             m_blocks.emplace_back(std::make_unique<Block>(m_current_block));
-            m_current_block = Block(*m_blocks.back().get());
+            m_current_block = Block(m_blocks.back()->get_hash());
             return m_current_block;
         }
         else

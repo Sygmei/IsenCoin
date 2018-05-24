@@ -5,6 +5,7 @@
 
 namespace base58
 {
+    static std::string alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
     /**
      * Encode a byte sequence as a base58-encoded string.
      * pbegin and pend cannot be NULL, unless both are.

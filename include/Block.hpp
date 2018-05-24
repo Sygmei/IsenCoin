@@ -16,7 +16,7 @@ namespace ic
         block_hash_t m_current_hash;
         timestamp_t m_timestamp;
         bool m_validated = false;
-        bool m_interrupt = false;
+        bool m_mining = false;
         bool is_nonce_valid(block_hash_t& block_hash, uint64_t nonce);
         signature_t calculate_merkle_root();
         block_hash_t fill_block_hash();
@@ -25,7 +25,7 @@ namespace ic
         Block();
 		Block(const Block& block);
         Block(signature_t previous_block, std::vector<Transaction> transactions = {});
-        Block(signature_t previous_hash, std::vector<Transaction> transactions = {}, uint64_t nonce = 0, timestamp_t timestamp = 0);
+        Block(signature_t previous_hash, uint64_t nonce, timestamp_t timestamp, std::vector<Transaction> transactions = {});
         void add_transaction(const Transaction& tx);
         void validate();
         signature_t get_hash(block_hash_t& block_hash, uint64_t nonce);

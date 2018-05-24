@@ -1,6 +1,8 @@
 #include <Functions.hpp>
 
 #include <algorithm>
+#include <locale>
+#include "Logger.hpp"
 
 namespace ic::utils
 {
@@ -27,5 +29,12 @@ namespace ic::utils
             return all_of(str.begin(), str.end(), isdigit);
         }
         return false;
+    }
+
+    std::string rtrim(const std::string& s)
+    {
+        std::string::const_iterator s_it = s.end();
+        while (s_it != s.begin() && *--s_it == char(0)) { if (s_it == s.begin() && *s_it == char(0)) { return ""; } }
+        return std::string(s.begin(), s_it + 1);
     }
 }

@@ -144,4 +144,9 @@ namespace ic
             return (node.get_address() == p_node.get_address() && node.get_port() == p_node.get_port());
         }) != m_nodes.end());
     }
+
+    std::vector<Node>& Tracker::get_nodes()
+    {
+        return m_nodes;
+    }
 }

@@ -7,4 +7,5 @@ namespace ic::utils
 {
     std::vector<std::string> split(const std::string& str, const std::string& delimiters);
     bool is_string_numeric(const std::string& str);
+    std::string rtrim(const std::string& s);
 }

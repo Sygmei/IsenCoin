@@ -68,6 +68,7 @@ namespace ic
 		m_nonce = block.m_nonce;
 		m_previous_hash = block.m_previous_hash;
 		m_timestamp = block.m_timestamp;
+        validate();
 	}
 
     Block::Block(signature_t previous_hash, std::vector<Transaction> transactions)
@@ -78,8 +79,7 @@ namespace ic
         fill_block_hash();
     }
 
-    Block::Block(signature_t previous_hash, std::vector<Transaction> transactions, uint64_t nonce,
-        timestamp_t timestamp)
+    Block::Block(signature_t previous_hash, uint64_t nonce, timestamp_t timestamp, std::vector<Transaction> transactions)
     {
         m_previous_hash = previous_hash;
         m_transactions = transactions;
@@ -90,10 +90,11 @@ namespace ic
 
     void Block::add_transaction(const Transaction& tx)
     {
+        m_mining = false;
+        Log->critical("Disabling mining for Block with timestamp (tx_add) {}", m_timestamp);
         m_transactions.push_back(tx);
         m_validated = false;
         generate_timestamp();
-        m_interrupt = true;
 		Log->error("Added new transaction");
     }
 
@@ -126,7 +127,9 @@ namespace ic
 
     void Block::mine(uint8_t threads)
     {
-		m_interrupt = false;
+		while (m_mining) {}
+        Log->critical("Enabling mining for Block with timestamp {}", m_timestamp);
+        m_mining = true;
         std::vector<std::thread> thread_pool;
         Log->debug("Starting mining");
         block_hash_t thread_base_hash = fill_block_hash();
@@ -136,13 +139,13 @@ namespace ic
             {
                 unsigned long long nonce = starting_index;
   
-                while (!m_interrupt && !m_validated && !is_nonce_valid(thread_hash, nonce))
+                while (m_mining && !m_validated && !is_nonce_valid(thread_hash, nonce))
                 {
                     nonce += increment_level;
                     if ((nonce % 1000000) == 0)
                         Log->debug("Nonce : {} = {}", nonce, char_array_to_hex(thread_hash));
                 }
-                if (!m_interrupt)
+                if (m_mining)
                 {
                     if (!m_validated)
                     {
@@ -164,14 +167,15 @@ namespace ic
             }
         }
 
-		if (!m_interrupt)
+		if (m_mining)
 		{
 			Log->warn("Mining ended with nonce {}", m_nonce);
 			const signature_t f_hash = get_hash();
 			Log->error("Resulting in following hash : {}", char_array_to_hex(f_hash));
 		}
-		else
-			m_interrupt = false;
+        Log->critical("Disabling mining for Block with timestamp {}", m_timestamp);
+		m_mining = false;
+        Log->debug("Is Block Validated ? {}", m_validated);
     }
 
     bool Block::is_valid() const

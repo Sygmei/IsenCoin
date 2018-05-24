@@ -23,7 +23,6 @@ namespace ic
         unsigned char public_key[32];
         unsigned char private_key[64];
 
-        std::string encoded;
         do
         {
             for (unsigned char& i : seed)
@@ -32,10 +31,14 @@ namespace ic
 
             std::copy(std::begin(private_key), std::end(private_key), std::begin(m_private_key));
             std::copy(std::begin(public_key), std::end(public_key), std::begin(m_public_key));
+        } while (this->get_b58_public_key().rfind(prefix, 0) != 0);
+        std::cout << "FOUND ADDRESS : " << this->get_b58_public_key() << std::endl;
+    }
 
-            encoded = base58::encode(m_public_key.data(), m_public_key.data() + m_public_key.size());
-        } while (encoded.rfind(prefix, 0) != 0);
-        std::cout << "FOUND ADDRESS : " << encoded << std::endl;
+    Wallet::Wallet(const Wallet& wallet)
+    {
+        m_public_key = wallet.m_public_key;
+        m_private_key = wallet.m_private_key;
     }
 
     Wallet::Wallet(std::array<unsigned char, 64> private_key, std::array<unsigned char, 32> public_key)
@@ -48,12 +51,6 @@ namespace ic
     {
         std::copy(std::begin(private_key), std::end(private_key), std::begin(m_private_key));
         std::copy(std::begin(public_key), std::end(public_key), std::begin(m_public_key));
-    }
-
-    Wallet::Wallet(bool generate)
-    {
-        if (generate)
-            this->generate();
     }
 
     double Wallet::Benchmark()
@@ -93,6 +90,16 @@ namespace ic
     public_key_t Wallet::get_public_key() const
     {
         return m_public_key;
+    }
+
+    std::string Wallet::get_b58_public_key() const
+    {
+        return base58::encode(m_public_key.data(), m_public_key.data() + m_public_key.size());
+    }
+
+    std::string Wallet::get_b58_private_key() const
+    {
+        return base58::encode(m_private_key.data(), m_private_key.data() + m_private_key.size());
     }
 
     Wallet::operator public_key_t() const

@@ -22,5 +22,6 @@ namespace ic
         void propagate(const mp::MsgPack& msg);
         void handle_message(tacopie::tcp_client& client, const mp::MsgPack& msg);
         bool contains_node(Node node);
+        std::vector<Node>& get_nodes();
     };
 }
