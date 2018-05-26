@@ -160,11 +160,12 @@ namespace ic
 
     void Block::mine(uint8_t threads, public_key_t reward_recv)
     {
-		while (m_mining) {}
+		while (m_mining || m_sagain) {}
         Log->critical("Enabling mining for Block with timestamp {}", m_timestamp);
         Transaction reward_tx(reward_recv);
         add_transaction(reward_tx);
         m_mining = true;
+        m_sagain = true;
         std::vector<std::thread> thread_pool;
         Log->debug("Starting mining");
         block_hash_t thread_base_hash = fill_block_hash();
@@ -210,10 +211,12 @@ namespace ic
 		}
         else
         {
+            Log->warn("Mining aborted, removing reward from Block");
             clean_block();
         }
         Log->critical("Disabling mining for Block with timestamp {}", m_timestamp);
 		m_mining = false;
+        m_sagain = false;
         Log->debug("Is Block Validated ? {}", m_validated);
     }
 
@@ -251,6 +254,11 @@ namespace ic
         {
             return (tx->is_reward());
         }), m_transactions.end());
+    }
+
+    void Block::interrupt()
+    {
+        m_mining = false;
     }
 }
 

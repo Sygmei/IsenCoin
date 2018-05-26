@@ -18,6 +18,7 @@ namespace ic
         timestamp_t m_timestamp;
         bool m_validated = false;
         bool m_mining = false;
+        bool m_sagain = false;
         bool is_nonce_valid(block_hash_t& block_hash, uint64_t nonce);
         signature_t calculate_merkle_root();
         block_hash_t fill_block_hash();
@@ -41,5 +42,6 @@ namespace ic
         std::vector<Transaction*> get_transactions() const;
         unsigned int get_depth() const;
         void clean_block();
+        void interrupt();
     };
 }

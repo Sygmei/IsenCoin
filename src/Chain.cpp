@@ -50,6 +50,7 @@ namespace ic
         {
             if (get_current_block().get_tx_amount() > 0)
             {
+                get_current_block().interrupt();
                 std::thread mining_thread([&]() {
                     get_current_block().mine(8, reward_recv);
                     if (get_current_block().is_valid())

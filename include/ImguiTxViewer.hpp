@@ -164,6 +164,12 @@ namespace ImGui::ext
                 ImGui::Text(fmt::format("Timestamp : {}", tx->get_timestamp()).c_str());
                 ImGui::Text(fmt::format("Amount : {} ic", tx->get_amount()).c_str());
                 ImGui::Text(fmt::format("Validity : {}", tx_validity ? "Valid" : "Invalid").c_str());
+                if (tx->is_reward())
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+                    ImGui::Text("<REWARD>");
+                    ImGui::PopStyleColor();
+                }
                 ImGui::TextWrapped(fmt::format("Signature : {}", tx->get_printable_signature()).c_str());
                 ImGui::Text("Raw Memory View");
                 DrawContents(mem_data, mem_size, base_display_addr);
