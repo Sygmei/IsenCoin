@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include <Config.hpp>
 #include <Transaction.hpp>
 
 namespace ic
@@ -31,12 +32,14 @@ namespace ic
         void validate();
         signature_t get_hash(block_hash_t& block_hash, uint64_t nonce) const;
         signature_t get_hash();
+        std::string get_hex_hash();
         uint64_t get_nonce();
-        void mine(uint8_t threads);
+        void mine(uint8_t threads, public_key_t reward_recv = config::ISENCOIN_NULL_ADDRESS);
         bool is_valid() const;
         bool is_mining() const;
         unsigned int get_tx_amount() const;
         std::vector<Transaction*> get_transactions() const;
         unsigned int get_depth() const;
+        void clean_block();
     };
 }

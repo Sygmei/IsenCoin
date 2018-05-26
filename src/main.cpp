@@ -19,6 +19,7 @@
 
 #include <ed25519/fixedint.h>
 #include <base58/base58.hpp>
+#include "ed25519/ed25519.h"
 
 
 std::condition_variable cv;
@@ -44,6 +45,13 @@ int main(int argc, char** argv)
 
     using namespace ic;
     using namespace msgpack11;
+
+    public_key_t pukey;
+    private_key_t prikey;
+    std::array<unsigned char, 32> zero_seed = {};
+    ed25519_create_keypair(pukey.data(), prikey.data(), zero_seed.data());
+    std::cout << "PUBLIC : " << char_array_to_hex(pukey) << std::endl;
+    std::cout << "PRIVATE : " << char_array_to_hex(prikey) << std::endl;
 
     unsigned int port;
     if (cmdl("port"))

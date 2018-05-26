@@ -124,13 +124,58 @@ namespace ic::ui
         m_wallets.emplace_back(name, wallet);
     }
 
+    std::string AddressBook::get_address_name_at_index(unsigned int index)
+    {
+        return m_addresses[index].first;
+    }
+
+    public_key_t AddressBook::get_public_key_at_index(unsigned int index)
+    {
+        public_key_t pkey;
+        std::vector<unsigned char> pkey_vctor;
+        base58::decode(m_addresses[index].second.c_str(), pkey_vctor);
+        std::copy(pkey_vctor.begin(), pkey_vctor.end(), pkey.begin());
+        return pkey;
+    }
+
+    std::vector<std::pair<std::string, std::string>>& AddressBook::get()
+    {
+        return m_addresses;
+    }
+
+    std::vector<public_key_t>& AddressBook::get_public_keys()
+    {
+        std::vector<public_key_t> pkeys;
+        for (unsigned int i = 0; i < get_amount(); i++)
+            pkeys.push_back(get_public_key_at_index(i));
+        return pkeys;
+    }
+
+    std::vector<std::string> AddressBook::get_names()
+    {
+        std::vector<std::string> names;
+        for (unsigned int i = 0; i < get_amount(); i++)
+            names.push_back(get_address_name_at_index(i));
+        return names;
+    }
+
+    unsigned AddressBook::get_amount() const
+    {
+        return m_addresses.size();
+    }
+
+    void AddressBook::add_address(const std::string& name, const std::string& public_key)
+    {
+        m_addresses.emplace_back(name, public_key);
+    }
+
     CreateWalletWindow::CreateWalletWindow() : UiWindow("Wallet Creation")
     {
         wallet_prefix_input.resize(20);
         wallet_name_input.resize(20);
     }
 
-    void CreateWalletWindow::update(WalletList& wallets)
+    void CreateWalletWindow::update(WalletList& wallets, AddressBook& address_book)
     {
         if (m_opened)
         {
@@ -173,6 +218,7 @@ namespace ic::ui
                     wallet_prefix_input = std::string(20, 0);
                     Log->error("WC : {}", wallet_creator.get_b58_public_key());
                     wallets.add_wallet(wallet_name, wallet_creator);
+                    address_book.add_address(wallet_name, wallet_creator.get_b58_public_key());
                     creating_wallet = 0;
                     close();
                 }
@@ -239,6 +285,41 @@ namespace ic::ui
         }
     }
 
+    BlockchainExplorerWindow::BlockchainExplorerWindow(std::vector<std::unique_ptr<UiWindow>>* windows) :
+    UiWindow("Blockchain Explorer")
+    {
+        m_free_windows = windows;
+    }
+
+    void BlockchainExplorerWindow::update()
+    {
+        if (m_opened)
+        {
+            ImGui::Begin(m_title.c_str(), &m_opened,
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoSavedSettings |
+                ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("Block List : ");
+            std::vector<std::string> blk_list;
+            for (const auto& blk : Chain::Blockchain().get_blocks())
+            {
+                if (blk->is_valid())
+                    blk_list.push_back(blk->get_hex_hash().substr(0, 20) + "...");
+            }
+
+            ImGui::ListBox("##blk_list", &m_selected_block, vector_getter, static_cast<void*>(&blk_list), blk_list.size(), 5);
+            if (!blk_list.empty())
+            {
+                ImGui::TextWrapped(fmt::format("Full Hash : {}", Chain::Blockchain().get_blocks()[m_selected_block]->get_hex_hash()).c_str());
+            }
+            if (ImGui::Button("View Block"))
+            {
+                m_free_windows->push_back(std::make_unique<TxExplorerWindow>(m_free_windows, *Chain::Blockchain().get_blocks()[m_selected_block]));
+            }
+            ImGui::End();
+        }
+    }
+
     void push_red_button_style()
     {
         const ImVec4 red(0.7f, 0, 0, 1.f);
@@ -282,6 +363,62 @@ namespace ic::ui
         }
     }
 
+    TxCreateWindow::TxCreateWindow() : UiWindow("Create Transaction")
+    {
+    }
+
+    void TxCreateWindow::update(const std::string& sender_name, Wallet& current_wallet, AddressBook& address_book)
+    {
+        if (m_opened)
+        {
+            ImGui::Begin(m_title.c_str(), &m_opened,
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoSavedSettings |
+                ImGuiWindowFlags_AlwaysAutoResize);
+            if (success == 0)
+            {
+                ImGui::Text(fmt::format("Sender : {}", sender_name).c_str());
+                ImGui::Text("Receiver :");
+                ImGui::ListBox("##wallet_receiver", &m_selected_receiver, vector_getter, static_cast<void*>(&address_book.get_names()), address_book.get_amount());
+                ImGui::InputFloat("Amount", &m_amount);
+                if (ImGui::Button("Send"))
+                {
+                    const Transaction new_tx(current_wallet, address_book.get_public_key_at_index(m_selected_receiver), m_amount);
+                    if (current_wallet.get_funds() >= m_amount)
+                    {
+                        Chain::Blockchain().get_current_block().add_transaction(new_tx);
+                        success = 1;
+                    }
+                    else
+                    {
+                        success = 2;
+                    }
+                }
+            }
+            else if (success == 1)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+                ImGui::Text("Transaction sent !");
+                ImGui::PopStyleColor();
+                if (ImGui::Button("OK"))
+                {
+                    success = 0;
+                }
+            }
+            else if (success == 2)
+            {
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                ImGui::Text("Not enough funds !");
+                ImGui::PopStyleColor();
+                if (ImGui::Button("OK"))
+                {
+                    success = 0;
+                }
+            }
+            ImGui::End();
+        }
+    }
+
     void main(Tracker& tracker)
     {
         using namespace ic;
@@ -314,10 +451,9 @@ namespace ic::ui
         std::thread loading_dots_thread([] { return update_loading_dots(loading_dots); });
 
         WalletList wallets;
-        CreateWalletWindow win_wallet_creation;
-        AddNodeWindow win_node_add;
+        AddressBook address_book;
 
-        int selected_wallet;
+        int selected_wallet = 0;
         int selected_other_wallet;
         int selected_node;
         bool save_nodes = true;
@@ -340,11 +476,14 @@ namespace ic::ui
         Chain::Blockchain().get_current_block().add_transaction(tx2);
         Chain::Blockchain().get_current_block().add_transaction(tx3);
         Chain::Blockchain().get_current_block().add_transaction(tx4);
-        
-        TxDisplayWindow tx_display_window(tx);
+
         mining_status_tex.loadFromFile("ui/cog.png");
 
         std::vector<std::unique_ptr<UiWindow>> free_windows;
+        CreateWalletWindow win_wallet_creation;
+        AddNodeWindow win_node_add;
+        BlockchainExplorerWindow blockchain_exp_win(&free_windows);
+        TxCreateWindow tx_create_win;
         //free_windows.push_back(std::make_unique<TxDisplayWindow>(tx));
 
         ImGui::GetIO().IniFilename = nullptr;
@@ -360,9 +499,6 @@ namespace ic::ui
             }
 
             ImGui::SFML::Update(window, deltaClock.restart());
-
-            win_wallet_creation.update(wallets);
-            win_node_add.update(tracker);
 
             //Wallets
             ImGui::SetNextWindowPos(ImVec2(0, 0));
@@ -390,7 +526,7 @@ namespace ic::ui
                 ImGuiWindowFlags_NoSavedSettings |
                 ImGuiWindowFlags_AlwaysAutoResize |
                 ImGuiWindowFlags_NoCollapse);
-            if (selected_wallet >= 0)
+            if (wallets.get_amount() > 0 && selected_wallet >= 0)
             {
                 const std::string current_wallet_name = wallets.get_wallet_name_at_index(selected_wallet);
                 Wallet& current_wallet = wallets.get_wallet_at_index(selected_wallet);
@@ -400,8 +536,12 @@ namespace ic::ui
                 ImGui::TextWrapped(current_wallet.get_b58_private_key().c_str());
                 ImGui::Text("Wallet Public Key :");
                 ImGui::TextWrapped(current_wallet.get_b58_public_key().c_str());
-                ImGui::Text(fmt::format("Wallet balance : {} ic", 22.424).c_str());
-                ImGui::Button("Create A Transaction");
+                ImGui::Text(fmt::format("Wallet balance : {} ic", current_wallet.get_funds()).c_str());
+                if (ImGui::Button("Create A Transaction"))
+                {
+                    tx_create_win.toggle();
+                }
+                tx_create_win.update(current_wallet_name, current_wallet, address_book);
                 push_red_button_style();
                 ImGui::Button("Delete Wallet /!\\");
                 ImGui::PopStyleColor(3);
@@ -468,7 +608,13 @@ namespace ic::ui
                 if (ImGui::Button("Start mining now"))
                 {
                     Log->warn("Start mining now...");
-                    Chain::Blockchain().mine_and_next(true);
+                    if (wallets.get_amount() > 0 && selected_wallet >= 0)
+                    {
+                        Wallet& current_wallet = wallets.get_wallet_at_index(selected_wallet);
+                        Chain::Blockchain().mine_and_next(true, current_wallet.get_public_key());
+                    }
+                    else
+                        Chain::Blockchain().mine_and_next(true);
                 }
             }
             ImGui::Text("Mining status :");
@@ -482,8 +628,13 @@ namespace ic::ui
                 if (!check_for_free_window(&free_windows, "Block Explorer #" + std::to_string(Chain::Blockchain().get_current_block().get_depth())))
                     free_windows.push_back(std::make_unique<TxExplorerWindow>(&free_windows, Chain::Blockchain().get_current_block()));
             }
-            ImGui::Button("Block Explorer");
+            if (ImGui::Button("Block Explorer"))
+                blockchain_exp_win.toggle();
             ImGui::End();
+
+            win_wallet_creation.update(wallets, address_book);
+            win_node_add.update(tracker);
+            blockchain_exp_win.update();
 
             const unsigned int f_win_size = free_windows.size();
             for (unsigned int i = 0; i < f_win_size; i++)

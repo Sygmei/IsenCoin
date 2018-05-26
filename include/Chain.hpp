@@ -23,7 +23,8 @@ namespace ic
         Block& get_current_block();
         Block& get_block_at_index(unsigned int index);
         Block& create_new_block();
-        void mine_and_next(bool force = false);
+        void mine_and_next(bool force = false, public_key_t reward_recv = {});
         void set_auto_mining(bool state);
+        std::vector<Block*> get_blocks() const;
     };
 }

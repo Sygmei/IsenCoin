@@ -9,6 +9,7 @@
 #include <random>
 #include <string>
 #include <numeric>
+#include "Chain.hpp"
 
 namespace ic 
 {
@@ -100,6 +101,26 @@ namespace ic
     std::string Wallet::get_b58_private_key() const
     {
         return base58::encode(m_private_key.data(), m_private_key.data() + m_private_key.size());
+    }
+
+    float Wallet::get_funds()
+    {
+        float funds = 0;
+        for (const auto& blk : Chain::Blockchain().get_blocks())
+        {
+            for (const auto& tx : blk->get_transactions())
+            {
+                if (tx->get_sender() == m_public_key)
+                {
+                    funds -= tx->get_amount();
+                }
+                else if (tx->get_receiver() == m_public_key)
+                {
+                    funds += tx->get_amount();
+                }
+            }
+        }
+        return funds;
     }
 
     Wallet::operator public_key_t() const

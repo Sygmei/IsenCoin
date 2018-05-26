@@ -110,12 +110,20 @@ namespace ic
 
     void Block::add_transaction(const Transaction& tx)
     {
-        m_mining = false;
-        Log->critical("Disabling mining for Block with timestamp (tx_add) {}", m_timestamp);
-        m_transactions.push_back(std::make_unique<Transaction>(tx));
-        m_validated = false;
-        generate_timestamp();
-		Log->error("Added new transaction");
+        Transaction ltx = tx;
+        if (ltx.validate())
+        {
+            m_mining = false;
+            Log->critical("Disabling mining for Block with timestamp (tx_add) {}", m_timestamp);
+            m_transactions.push_back(std::make_unique<Transaction>(tx));
+            m_validated = false;
+            generate_timestamp();
+            Log->error("Added new transaction");
+        }
+        else
+        {
+            Log->error("Can't add invalid Transaction to Block : {}", ltx.as_string());
+        }
     }
 
     void Block::validate()
@@ -145,10 +153,17 @@ namespace ic
             throw except::InvalidBlockException();
     }
 
-    void Block::mine(uint8_t threads)
+    std::string Block::get_hex_hash()
+    {
+        return char_array_to_hex(get_hash());
+    }
+
+    void Block::mine(uint8_t threads, public_key_t reward_recv)
     {
 		while (m_mining) {}
         Log->critical("Enabling mining for Block with timestamp {}", m_timestamp);
+        Transaction reward_tx(reward_recv);
+        add_transaction(reward_tx);
         m_mining = true;
         std::vector<std::thread> thread_pool;
         Log->debug("Starting mining");
@@ -193,6 +208,10 @@ namespace ic
 			const signature_t f_hash = get_hash();
 			Log->error("Resulting in following hash : {}", char_array_to_hex(f_hash));
 		}
+        else
+        {
+            clean_block();
+        }
         Log->critical("Disabling mining for Block with timestamp {}", m_timestamp);
 		m_mining = false;
         Log->debug("Is Block Validated ? {}", m_validated);
@@ -224,6 +243,14 @@ namespace ic
     unsigned int Block::get_depth() const
     {
         return m_depth;
+    }
+
+    void Block::clean_block()
+    {
+        m_transactions.erase(std::remove_if(m_transactions.begin(), m_transactions.end(), [](const auto& tx)
+        {
+            return (tx->is_reward());
+        }), m_transactions.end());
     }
 }
 

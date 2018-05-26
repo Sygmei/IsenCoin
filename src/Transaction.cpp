@@ -56,6 +56,42 @@ namespace ic
         std::cout << this->as_string() << std::endl;
     }
 
+    Transaction::Transaction(public_key_t receiver)
+    {
+        m_sender = config::ISENCOIN_NULL_ADDRESS;
+        m_receiver = receiver;
+        m_amount = config::ISENCOIN_REWARD;
+        std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
+        m_timestamp = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
+
+        std::string tx_sign_message = this->get_signable_transaction_message();
+        ed25519_sign(
+            m_signature.data(),
+            reinterpret_cast<const unsigned char *>(tx_sign_message.c_str()),
+            tx_sign_message.size(),
+            config::ISENCOIN_NULL_ADDRESS.data(),
+            config::ISENCOIN_NULL_PV_ADDRESS.data()
+        );
+    }
+
+    Transaction::Transaction(const Wallet& sender, const public_key_t& receiver, float amount)
+    {
+        m_sender = sender.get_public_key();
+        m_receiver = receiver;
+        m_amount = amount;
+        std::chrono::time_point<std::chrono::system_clock> tp = std::chrono::system_clock::now();
+        m_timestamp = std::chrono::duration_cast<std::chrono::microseconds>(tp.time_since_epoch()).count();
+
+        std::string tx_sign_message = this->get_signable_transaction_message();
+        ed25519_sign(
+            m_signature.data(),
+            reinterpret_cast<const unsigned char *>(tx_sign_message.c_str()),
+            tx_sign_message.size(),
+            sender.get_public_key().data(),
+            sender.get_private_key().data()
+        );
+    }
+
     Transaction::Transaction(const public_key_t& sender, const public_key_t& receiver, const amount_t amount, const timestamp_t timestamp,
                              const signature_t& signature)
     {
@@ -189,6 +225,11 @@ namespace ic
         ss << txfc::sender << std::string(m_sender.begin(), m_sender.end());
         ss << txfc::receiver << std::string(m_receiver.begin(), m_receiver.end());
         return ss.str();
+    }
+
+    bool Transaction::is_reward() const
+    {
+        return (m_sender == config::ISENCOIN_NULL_ADDRESS);
     }
 
     signature_t Transaction::get_merkel_root(const std::vector<signature_t>& signatures)

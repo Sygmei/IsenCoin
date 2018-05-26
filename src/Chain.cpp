@@ -44,14 +44,14 @@ namespace ic
         }
     }
 
-    void Chain::mine_and_next(bool force)
+    void Chain::mine_and_next(bool force, public_key_t reward_recv)
     {
         if (force || (auto_mining && get_current_block().get_tx_amount() >= minimum_tx_amount))
         {
             if (get_current_block().get_tx_amount() > 0)
             {
                 std::thread mining_thread([&]() {
-                    get_current_block().mine(8);
+                    get_current_block().mine(8, reward_recv);
                     if (get_current_block().is_valid())
                         create_new_block();
                 });
@@ -62,5 +62,15 @@ namespace ic
                 Log->warn("Can't start mining with 0 pending transactions, cancelling...");
             }
         }
+    }
+
+    std::vector<Block*> Chain::get_blocks() const
+    {
+        std::vector<Block*> blocks;
+        for (const auto& blk : m_blocks)
+        {
+            blocks.push_back(blk.get());
+        }
+        return blocks;
     }
 }

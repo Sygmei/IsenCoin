@@ -52,6 +52,20 @@ namespace ic::ui
         void add_wallet(const std::string& name, Wallet& wallet);
     };
 
+    class AddressBook
+    {
+    private:
+        std::vector<std::pair<std::string, std::string>> m_addresses;
+    public:
+        std::string get_address_name_at_index(unsigned int index);
+        public_key_t get_public_key_at_index(unsigned int index);
+        std::vector<std::pair<std::string, std::string>>& get();
+        std::vector<public_key_t>& get_public_keys();
+        std::vector<std::string> get_names();
+        unsigned int get_amount() const;
+        void add_address(const std::string& name, const std::string& public_key);
+    };
+
     class CreateWalletWindow : public UiWindow
     {
     private:
@@ -61,7 +75,7 @@ namespace ic::ui
         Wallet wallet_creator{};
     public:
         CreateWalletWindow();
-        void update(WalletList& wallets);
+        void update(WalletList& wallets, AddressBook& address_book);
     };
 
     class TxDisplayWindow : public UiWindow
@@ -86,11 +100,14 @@ namespace ic::ui
         void update() override;
     };
 
-    class BlockExplorerWindow : public UiWindow
+    class BlockchainExplorerWindow : public UiWindow
     {
+    private:
+        int m_selected_block = 0;
+        std::vector<std::unique_ptr<UiWindow>>* m_free_windows;
     public:
-        BlockExplorerWindow();
-        void update();
+        BlockchainExplorerWindow(std::vector<std::unique_ptr<UiWindow>>* windows);
+        void update() override;
     };
 
     class AddNodeWindow : public UiWindow
@@ -101,6 +118,17 @@ namespace ic::ui
     public:
         AddNodeWindow();
         void update(Tracker& tracker);
+    };
+
+    class TxCreateWindow : public UiWindow
+    {
+    private:
+        int m_selected_receiver = 0;
+        float m_amount = 0;
+        int success = 0;
+    public:
+        TxCreateWindow();
+        void update(const std::string& sender_name, Wallet& current_wallet, AddressBook& address_book);
     };
 
     void main(Tracker& tracker);

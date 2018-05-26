@@ -23,6 +23,8 @@ namespace ic
         static signature_t combine(const signature_t& signature1, const signature_t& signature2);
         Transaction(const Transaction& tx);
         Transaction(const Wallet& sender, const Wallet& receiver, float amount);
+        Transaction(public_key_t receiver);
+        Transaction(const Wallet& sender, const public_key_t& receiver, float amount);
         Transaction(const public_key_t& sender, const public_key_t& receiver, amount_t amount, timestamp_t timestamp, const signature_t& signature);
         ~Transaction() = default;
         bool validate();
@@ -37,6 +39,7 @@ namespace ic
         std::string as_string() const;
         std::string get_signable_transaction_message();
         //float balance(int address);
+        bool is_reward() const;
         static p2p::Requirements Fields;
     };
 }

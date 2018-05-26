@@ -25,6 +25,8 @@ namespace ic
         std::string get_b58_public_key() const;
         std::string get_b58_private_key() const;
 
+        float get_funds();
+
         void send(const Wallet& wallet, float amount);
         operator public_key_t() const;
     };
