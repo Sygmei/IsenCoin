@@ -11,10 +11,12 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 
+#include <Block.hpp>
 #include <Functions.hpp>
+#include <ImguiTxViewer.hpp>
 #include <Logger.hpp>
+#include <Tracker.hpp>
 #include <Wallet.hpp>
-#include "Tracker.hpp"
 
 namespace ic::ui
 {
@@ -25,10 +27,15 @@ namespace ic::ui
     {
     protected:
         bool m_opened = false;
+        std::string m_title;
     public:
+        explicit UiWindow(const std::string& title);
+        std::string get_title() const;
         void open();
         void close();
         void toggle();
+        bool is_opened() const;
+        virtual void update() {};
     };
 
     class WalletList
@@ -55,6 +62,35 @@ namespace ic::ui
     public:
         CreateWalletWindow();
         void update(WalletList& wallets);
+    };
+
+    class TxDisplayWindow : public UiWindow
+    {
+    private:
+        Transaction* m_transaction;
+        ImGui::ext::TxViewer tx_viewer;
+        std::string m_title;
+    public:
+        TxDisplayWindow(Transaction& tx);
+        void update() override;
+    };
+
+    class TxExplorerWindow : public UiWindow
+    {
+    private:
+        Block* m_block;
+        std::vector<std::unique_ptr<UiWindow>>* m_free_windows;
+        int m_selected_tx = 0;
+    public:
+        TxExplorerWindow(std::vector<std::unique_ptr<UiWindow>>* windows, Block& block);
+        void update() override;
+    };
+
+    class BlockExplorerWindow : public UiWindow
+    {
+    public:
+        BlockExplorerWindow();
+        void update();
     };
 
     class AddNodeWindow : public UiWindow

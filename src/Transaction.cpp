@@ -27,6 +27,15 @@ namespace ic
         { "receiver", mp::MsgPack::Type::STRING }
     };
 
+    Transaction::Transaction(const Transaction& tx)
+    {
+        m_timestamp = tx.m_timestamp;
+        m_amount = tx.m_amount;
+        m_receiver = tx.m_receiver;
+        m_sender = tx.m_sender;
+        m_signature = tx.m_signature;
+    }
+
     Transaction::Transaction(const Wallet& sender, const Wallet& receiver, float amount)
     {
         m_sender = sender.get_public_key();
@@ -57,11 +66,12 @@ namespace ic
         m_signature = signature;
     }
 
-    void Transaction::validate()
+    bool Transaction::validate()
     {
         std::string tx_sign_message = this->get_signable_transaction_message();
         std::cout << "TSM : " << tx_sign_message << std::endl;
         std::cout << "TSM Size : " << tx_sign_message.size() << std::endl;
+        std::cout << "TSM HEX : " << char_array_to_hex(tx_sign_message) << std::endl;
         if (ed25519_verify(m_signature.data(), reinterpret_cast<const unsigned char*>(tx_sign_message.c_str()), tx_sign_message.size(), m_sender.data()))
         {
             Log->info("Valid Transaction ! {}", this->as_string());
@@ -69,9 +79,15 @@ namespace ic
                 throw except::InvalidRewardAmountException(m_amount);
             if (m_amount < 0)
                 throw except::NegativeAmountException(m_amount);
+            return true;
         }
         else
-            throw except::InvalidTransactionException(this->as_string());
+        {
+            Log->warn("Invalid Transaction : {}", this->as_string());
+            //throw except::InvalidTransactionException();
+            return false;
+        }
+            
         /*if (m_sender != 0)
         {
 
@@ -100,7 +116,7 @@ namespace ic
         sha512(input.data(), input.size(), result.data());
         return result;
     }
-    
+
     const signature_t& Transaction::get_signature() const
     {
         return m_signature;

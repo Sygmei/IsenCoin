@@ -173,6 +173,14 @@ namespace ic::p2p
 
     mp::MsgPack recv_msg(tacopie::tcp_socket& socket, size_t max_size)
     {
-        return p2p::bytearray_to_msgpack(socket.recv(max_size));
+        try
+        {
+            return p2p::bytearray_to_msgpack(socket.recv(max_size));
+        }
+        catch (const std::exception& e)
+        {
+            Log->error("Problem receiving message from Node {}:{} (Reason : {})", socket.get_host(), socket.get_port(), e.what());
+            return msgpack11::MsgPack();
+        }
     }
 }

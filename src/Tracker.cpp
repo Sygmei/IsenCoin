@@ -10,11 +10,11 @@
 
 namespace ic 
 {
-    Tracker::Tracker(const unsigned int port)
+    void Tracker::start_server()
     {
-        Log->info("Starting Tracker using port {}", port);
-        m_port = port;
-        m_server.start(config::DEFAULT_BIND, m_port, [&] (const std::shared_ptr<tacopie::tcp_client>& client) -> bool {
+        if (m_server.is_running())
+            m_server.stop(true, true);
+        m_server.start(config::DEFAULT_BIND, m_port, [&](const std::shared_ptr<tacopie::tcp_client>& client) -> bool {
             Node node(client->get_socket().get_host(), client->get_socket().get_port());
             Log->info("(Server) New client connected {}:{}", node.get_address(), node.get_port());
             mp::MsgPack msg = p2p::recv_msg(client->get_socket(), 4096);
@@ -24,38 +24,52 @@ namespace ic
         });
     }
 
+    Tracker::Tracker(uint16_t port)
+    {
+        Log->info("Starting Tracker using port {}", port);
+        m_port = port;
+        start_server();
+    }
+
     void Tracker::add_node(Node node)
     {
         Log->info("(Client) Trying to add Node {}:{}...", node.get_address(), node.get_port());
-        std::thread t([&](Node node) {
-            tacopie::tcp_client client;
-            mp::MsgPack msg;
-            try
-            {
-                client.connect(node.get_address(), node.get_port(), 100000);
-                Log->info("(Client) Connected to server {}:{}", node.get_address(), node.get_port());
-            }
-            catch (const std::exception& e)
-            {
-                Log->error("Failed to connect to Node {}:{} (Reason : {})", node.get_address(), node.get_port(), e.what());
-                return;
-            }
-            msg = p2p::build_msg("hello", { { "port", m_port } });
-            p2p::send_msg(client.get_socket(), msg);
-            msg = p2p::recv_msg(client.get_socket(), 200);
-            p2p::use_msg(msg, "hello", [&](const auto& msg) {
-                if (msg["port"].uint16_value() == node.get_port())
+        if (!contains_node(node))
+        {
+            std::thread t([&](Node node) {
+                tacopie::tcp_client client;
+                mp::MsgPack msg;
+                try
                 {
-                    Log->info("(Client) Added Node {}:{} successfully", node.get_address(), node.get_port());
-                    if (!contains_node(node))
-                        m_nodes.push_back(node);
+                    client.connect(node.get_address(), node.get_port(), 100000);
+                    Log->info("(Client) Connected to server {}:{}", node.get_address(), node.get_port());
                 }
-            }, [&](){
-                Log->warn("(Client) Rejected Node {}:{}, incorrect Handshake message : {}", node.get_address(), node.get_port(), msg.dump());
-            });
-            client.disconnect();
-        }, node);
-        t.detach();
+                catch (const std::exception& e)
+                {
+                    Log->error("Failed to connect to Node {}:{} (Reason : {})", node.get_address(), node.get_port(), e.what());
+                    return;
+                }
+                msg = p2p::build_msg("hello", { { "port", m_port } });
+                p2p::send_msg(client.get_socket(), msg);
+                msg = p2p::recv_msg(client.get_socket(), 200);
+                p2p::use_msg(msg, "hello", [&](const auto& msg) {
+                    if (msg["port"].uint16_value() == node.get_port())
+                    {
+                        Log->info("(Client) Added Node {}:{} successfully", node.get_address(), node.get_port());
+                        if (!contains_node(node))
+                            m_nodes.push_back(node);
+                    }
+                }, [&]() {
+                    Log->warn("(Client) Rejected Node {}:{}, incorrect Handshake message : {}", node.get_address(), node.get_port(), msg.dump());
+                });
+                client.disconnect();
+            }, node);
+            t.detach();
+        }
+        else
+        {
+            Log->warn("Tracker already knows Node {}:{}, ignoring add_node()...", node.get_address(), node.get_port());
+        }
     }
 
     void Tracker::propagate(const mp::MsgPack& msg)
@@ -85,7 +99,7 @@ namespace ic
         Log->debug("Msg Dump (r) : {}", msg.dump());
         // @On "Hello" Message
         p2p::use_msg(msg, "hello", [&](const auto& msg) {
-            if (!contains_node(Node(client.get_host(), client.get_port())))
+            if (!contains_node(Node(client.get_host(), msg["port"].uint16_value())))
             {
                 mp::MsgPack msg_back = p2p::build_msg("hello", { { "port", m_port } });
                 p2p::send_msg(client.get_socket(), msg_back);
@@ -116,12 +130,7 @@ namespace ic
             Log->debug("Validating Peer Transaction...");
             tx.validate();
             Chain::Blockchain().get_current_block().add_transaction(tx);
-            std::thread mining_thread([](){ 
-                Chain::Blockchain().get_current_block().mine(8);
-                if (Chain::Blockchain().get_current_block().is_valid())
-                    Chain::Blockchain().create_new_block();
-            });
-			mining_thread.detach();
+            Chain::Blockchain().mine_and_next();
         }, [&]()
         {
             Log->warn("(Server) Received invalid Transaction from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());
@@ -148,5 +157,16 @@ namespace ic
     std::vector<Node>& Tracker::get_nodes()
     {
         return m_nodes;
+    }
+
+    void Tracker::set_port(uint16_t port)
+    {
+        m_port = port;
+        start_server();
+    }
+
+    void Tracker::remove_node_at_index(unsigned int index)
+    {
+        m_nodes.erase(m_nodes.begin() + index);
     }
 }

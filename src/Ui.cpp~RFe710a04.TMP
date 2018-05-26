@@ -8,24 +8,6 @@
 
 namespace ic::ui
 {
-    static unsigned int unique_id_gen = 0;
-    std::string unique_win(const std::string& title)
-    {
-        std::string proutch = title + "##" + std::to_string(unique_id_gen++);
-        Log->error("Generated unique win id : {}", proutch);
-        return proutch;
-    }
-
-    bool check_for_free_window(std::vector<std::unique_ptr<UiWindow>>* free_windows, const std::string& title)
-    {
-        for (const auto& win : *free_windows)
-        {
-            if (win->get_title() == title)
-                return true;
-        }
-        return false;
-    }
-
     void update_loading_dots(std::string& loading_dots)
     {
         using namespace std::chrono_literals;
@@ -50,16 +32,6 @@ namespace ic::ui
         *out_text = vector.at(idx).c_str();
         return true;
     };
-
-    UiWindow::UiWindow(const std::string& title)
-    {
-        m_title = title;
-    }
-
-    std::string UiWindow::get_title() const
-    {
-        return m_title;
-    }
 
     void UiWindow::open()
     {
@@ -124,7 +96,7 @@ namespace ic::ui
         m_wallets.emplace_back(name, wallet);
     }
 
-    CreateWalletWindow::CreateWalletWindow() : UiWindow("Wallet Creation")
+    CreateWalletWindow::CreateWalletWindow()
     {
         wallet_prefix_input.resize(20);
         wallet_name_input.resize(20);
@@ -134,7 +106,7 @@ namespace ic::ui
     {
         if (m_opened)
         {
-            ImGui::Begin(m_title.c_str(), &m_opened,
+            ImGui::Begin("Wallet Creation", &m_opened,
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoSavedSettings |
                 ImGuiWindowFlags_AlwaysAutoResize);
@@ -185,32 +157,27 @@ namespace ic::ui
         }
     }
 
-    TxDisplayWindow::TxDisplayWindow(Transaction& tx) : UiWindow("")
+    TxDisplayWindow::TxDisplayWindow(Transaction& tx)
     {
         m_transaction = &tx;
         tx_viewer.ReadOnly = true;
-        tx_viewer.tx_validity = tx.validate();
         m_opened = true;
-        m_title = unique_win("Tx Raw Memory Viewer");
-        Log->error("BUILDING TXDISPLAYWINDOW {}", m_title);
     }
 
     void TxDisplayWindow::update()
     {
         if (m_opened)
         {
-            tx_viewer.DrawWindow(m_title,
+            tx_viewer.DrawWindow("Tx Raw Memory Viewer",
                 m_transaction,
                 reinterpret_cast<unsigned char*>(m_transaction->get_signable_transaction_message().data()), 
                 m_transaction->get_signable_transaction_message().size(), &m_opened);
         }
     }
 
-    TxExplorerWindow::TxExplorerWindow(std::vector<std::unique_ptr<UiWindow>>* windows, Block& block) : 
-    UiWindow("Block Explorer #" + std::to_string(block.get_depth()))
+    TxExplorerWindow::TxExplorerWindow(Block& block)
     {
         m_block = &block;
-        m_free_windows = windows;
         m_opened = true;
     }
 
@@ -218,23 +185,15 @@ namespace ic::ui
     {
         if (m_opened)
         {
-            ImGui::Begin(m_title.c_str(), &m_opened,
+            ImGui::Begin("Block Explorer", &m_opened,
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoSavedSettings |
                 ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text("Transaction List : ");
             std::vector<std::string> tx_list;
             for (const auto& tx : m_block->get_transactions())
-                tx_list.push_back(tx->get_printable_signature().substr(0, 20) + "...");
+                tx_list.push_back(tx.get_printable_signature());
             ImGui::ListBox("##tx_list", &m_selected_tx, vector_getter, static_cast<void*>(&tx_list), m_block->get_tx_amount(), 5);
-            if (!tx_list.empty())
-            {
-                ImGui::TextWrapped(fmt::format("Full signature : {}", m_block->get_transactions()[m_selected_tx]->get_printable_signature()).c_str());
-            }
-            if (ImGui::Button("View Transaction"))
-            {
-                m_free_windows->push_back(std::make_unique<TxDisplayWindow>(*m_block->get_transactions()[m_selected_tx]));
-            }
             ImGui::End();
         }
     }
@@ -249,7 +208,7 @@ namespace ic::ui
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, bright_red);
     }
 
-    AddNodeWindow::AddNodeWindow() : UiWindow("Add Node")
+    AddNodeWindow::AddNodeWindow()
     {
         node_address_input.resize(16);
         node_port_input = config::DEFAULT_PORT;
@@ -259,7 +218,7 @@ namespace ic::ui
     {
         if (m_opened)
         {
-            ImGui::Begin(m_title.c_str(), &m_opened,
+            ImGui::Begin("Add Node", &m_opened,
                 ImGuiWindowFlags_NoResize |
                 ImGuiWindowFlags_NoSavedSettings |
                 ImGuiWindowFlags_AlwaysAutoResize);
@@ -332,20 +291,12 @@ namespace ic::ui
 
         Transaction tx(myWallet, myWallet2, 22);
         tx.validate();
-        Transaction tx2(myWallet, myWallet2, 11);
-        Transaction tx3(myWallet, myWallet2, 53);
-        tx3.validate();
-        Transaction tx4(myWallet, myWallet2, 958);
-        Chain::Blockchain().get_current_block().add_transaction(tx);
-        Chain::Blockchain().get_current_block().add_transaction(tx2);
-        Chain::Blockchain().get_current_block().add_transaction(tx3);
-        Chain::Blockchain().get_current_block().add_transaction(tx4);
         
         TxDisplayWindow tx_display_window(tx);
         mining_status_tex.loadFromFile("ui/cog.png");
 
         std::vector<std::unique_ptr<UiWindow>> free_windows;
-        //free_windows.push_back(std::make_unique<TxDisplayWindow>(tx));
+        free_windows.push_back(std::make_unique<TxDisplayWindow>(tx));
 
         ImGui::GetIO().IniFilename = nullptr;
         while (window.isOpen()) {
@@ -479,15 +430,13 @@ namespace ic::ui
                 ImGui::Image(mining_status_tex, sf::Vector2f(16, 16), sf::Color::Red);
             if (ImGui::Button("Transactions Explorer"))
             {
-                if (!check_for_free_window(&free_windows, "Block Explorer #" + std::to_string(Chain::Blockchain().get_current_block().get_depth())))
-                    free_windows.push_back(std::make_unique<TxExplorerWindow>(&free_windows, Chain::Blockchain().get_current_block()));
+                free_windows.push_back(std::make_unique<TxExplorerWindow>(Chain::Blockchain().get_current_block()));
             }
             ImGui::Button("Block Explorer");
             ImGui::End();
 
-            const unsigned int f_win_size = free_windows.size();
-            for (unsigned int i = 0; i < f_win_size; i++)
-                free_windows[i]->update();
+            for (const auto& win : free_windows)
+                win->update();
             close_orphaned_windows(free_windows);
 
             window.clear();

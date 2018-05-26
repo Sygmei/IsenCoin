@@ -18,13 +18,14 @@ namespace ic
         amount_t m_amount;
         public_key_t m_sender;
         public_key_t m_receiver;
-        std::string get_signable_transaction_message();
     public:
         static signature_t get_merkel_root(const std::vector<signature_t>& signatures);
         static signature_t combine(const signature_t& signature1, const signature_t& signature2);
+        Transaction(const Transaction& tx);
         Transaction(const Wallet& sender, const Wallet& receiver, float amount);
         Transaction(const public_key_t& sender, const public_key_t& receiver, amount_t amount, timestamp_t timestamp, const signature_t& signature);
-        void validate();
+        ~Transaction() = default;
+        bool validate();
         const signature_t& get_signature() const;
         std::string get_printable_signature() const;
         timestamp_t get_timestamp() const;
@@ -34,6 +35,7 @@ namespace ic
         mp::MsgPack to_msgpack() const;
         void corrupt();
         std::string as_string() const;
+        std::string get_signable_transaction_message();
         //float balance(int address);
         static p2p::Requirements Fields;
     };

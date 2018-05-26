@@ -185,13 +185,11 @@ namespace ic::ui
         }
     }
 
-    TxDisplayWindow::TxDisplayWindow(Transaction& tx) : UiWindow("")
+    TxDisplayWindow::TxDisplayWindow(Transaction& tx) : UiWindow(unique_win("Tx Raw Memory Viewer"))
     {
         m_transaction = &tx;
         tx_viewer.ReadOnly = true;
-        tx_viewer.tx_validity = tx.validate();
         m_opened = true;
-        m_title = unique_win("Tx Raw Memory Viewer");
         Log->error("BUILDING TXDISPLAYWINDOW {}", m_title);
     }
 
@@ -199,6 +197,7 @@ namespace ic::ui
     {
         if (m_opened)
         {
+            std::cout << "Title Pre : " << m_title << std::endl;
             tx_viewer.DrawWindow(m_title,
                 m_transaction,
                 reinterpret_cast<unsigned char*>(m_transaction->get_signable_transaction_message().data()), 
@@ -225,15 +224,15 @@ namespace ic::ui
             ImGui::Text("Transaction List : ");
             std::vector<std::string> tx_list;
             for (const auto& tx : m_block->get_transactions())
-                tx_list.push_back(tx->get_printable_signature().substr(0, 20) + "...");
+                tx_list.push_back(tx.get_printable_signature().substr(0, 20) + "...");
             ImGui::ListBox("##tx_list", &m_selected_tx, vector_getter, static_cast<void*>(&tx_list), m_block->get_tx_amount(), 5);
             if (!tx_list.empty())
             {
-                ImGui::TextWrapped(fmt::format("Full signature : {}", m_block->get_transactions()[m_selected_tx]->get_printable_signature()).c_str());
+                ImGui::TextWrapped(fmt::format("Full signature : {}", m_block->get_transactions()[m_selected_tx].get_printable_signature()).c_str());
             }
             if (ImGui::Button("View Transaction"))
             {
-                m_free_windows->push_back(std::make_unique<TxDisplayWindow>(*m_block->get_transactions()[m_selected_tx]));
+                m_free_windows->push_back(std::make_unique<TxDisplayWindow>(m_block->get_transactions()[m_selected_tx]));
             }
             ImGui::End();
         }

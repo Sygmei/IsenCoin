@@ -16,12 +16,15 @@ namespace ic
         std::vector<Node> m_nodes;
         std::vector<std::thread> m_connect_threads;
         uint16_t m_port;
+        void start_server();
     public:
-        Tracker(unsigned int port = 15317);
+        Tracker(uint16_t port = 15317);
         void add_node(Node node);
         void propagate(const mp::MsgPack& msg);
         void handle_message(tacopie::tcp_client& client, const mp::MsgPack& msg);
         bool contains_node(Node node);
         std::vector<Node>& get_nodes();
+        void set_port(uint16_t port);
+        void remove_node_at_index(unsigned int index);
     };
 }

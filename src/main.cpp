@@ -67,9 +67,9 @@ int main(int argc, char** argv)
     for (const vili::DataNode* ip : config_file.at<vili::ArrayNode>("ips"))
         tracker.add_node(Node(ip->get<std::string>()));
 
-    ui::main(tracker);
-
     Chain::Initialize_Blockchain();
+
+    ui::main(tracker);
 
     Log->critical("Size of uint64_t : {}", sizeof(uint64_t));
 

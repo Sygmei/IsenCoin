@@ -38,8 +38,8 @@ namespace ic
         if (!m_transactions.empty())
         {
             std::vector<signature_t> transactions_signatures;
-            for (const Transaction& tx : m_transactions)
-                transactions_signatures.push_back(tx.get_signature());
+            for (const auto& tx : m_transactions)
+                transactions_signatures.push_back(tx->get_signature());
             return Transaction::get_merkel_root(transactions_signatures);
         }
         else
@@ -49,9 +49,11 @@ namespace ic
     block_hash_t Block::fill_block_hash()
     {
         block_hash_t block_hash;
-        std::copy(m_previous_hash.begin(), m_previous_hash.end(), block_hash.begin());
+        uint64_t* depth_slot = reinterpret_cast<uint64_t*>(block_hash.data());
+        *depth_slot = m_depth;
+        std::copy(m_previous_hash.begin(), m_previous_hash.end(), block_hash.begin() + sizeof(uint64_t));
         signature_t temp_merkle_root = calculate_merkle_root();
-        std::copy(temp_merkle_root.begin(), temp_merkle_root.end(), block_hash.data() + sizeof(signature_t));
+        std::copy(temp_merkle_root.begin(), temp_merkle_root.end(), block_hash.data() + sizeof(uint64_t) + sizeof(signature_t));
         return block_hash;
     }
 
@@ -59,6 +61,7 @@ namespace ic
     {
         m_previous_hash = {};
         m_current_hash = {};
+        m_depth = 0;
         generate_timestamp();
     }
 
@@ -68,31 +71,48 @@ namespace ic
 		m_nonce = block.m_nonce;
 		m_previous_hash = block.m_previous_hash;
 		m_timestamp = block.m_timestamp;
+        m_depth = block.m_depth;
         validate();
 	}
 
-    Block::Block(signature_t previous_hash, std::vector<Transaction> transactions)
+    Block::Block(uint64_t index, signature_t previous_hash, std::vector<Transaction> transactions)
     {
         m_previous_hash = previous_hash;
-        m_transactions = transactions;
+        for (const auto& tx : transactions)
+            m_transactions.push_back(std::make_unique<Transaction>(tx));
+        m_depth = index;
         generate_timestamp();
         fill_block_hash();
     }
 
-    Block::Block(signature_t previous_hash, uint64_t nonce, timestamp_t timestamp, std::vector<Transaction> transactions)
+    Block::Block(uint64_t index, signature_t previous_hash, uint64_t nonce, timestamp_t timestamp, std::vector<Transaction> transactions)
     {
         m_previous_hash = previous_hash;
-        m_transactions = transactions;
+        for (const auto& tx : transactions)
+            m_transactions.push_back(std::make_unique<Transaction>(tx));
         m_nonce = nonce;
         m_timestamp = timestamp;
+        m_depth = index;
         validate();
+    }
+
+    Block& Block::operator=(const Block& block)
+    {
+        m_current_hash = block.m_current_hash;
+        m_nonce = block.m_nonce;
+        m_previous_hash = block.m_previous_hash;
+        m_timestamp = block.m_timestamp;
+        m_depth = block.m_depth;
+        for (const auto& tx : block.m_transactions)
+            m_transactions.push_back(std::make_unique<Transaction>(*tx));
+        return *this;
     }
 
     void Block::add_transaction(const Transaction& tx)
     {
         m_mining = false;
         Log->critical("Disabling mining for Block with timestamp (tx_add) {}", m_timestamp);
-        m_transactions.push_back(tx);
+        m_transactions.push_back(std::make_unique<Transaction>(tx));
         m_validated = false;
         generate_timestamp();
 		Log->error("Added new transaction");
@@ -106,11 +126,11 @@ namespace ic
             throw except::InvalidBlockException();
     }
 
-    signature_t Block::get_hash(block_hash_t& block_hash, uint64_t nonce)
+    signature_t Block::get_hash(block_hash_t& block_hash, uint64_t nonce) const
     {
-        timestamp_t* timestamp_slot = reinterpret_cast<timestamp_t*>(block_hash.data() + 2 * sizeof(signature_t));
+        timestamp_t* timestamp_slot = reinterpret_cast<timestamp_t*>(block_hash.data() + 2 * sizeof(signature_t) + sizeof(uint64_t));
         *timestamp_slot = m_timestamp;
-        uint64_t* nonce_slot = reinterpret_cast<uint64_t*>(block_hash.data() + 2 * sizeof(signature_t) + sizeof(timestamp_t));
+        uint64_t* nonce_slot = reinterpret_cast<uint64_t*>(block_hash.data() + 2 * sizeof(signature_t) + sizeof(timestamp_t) + sizeof(uint64_t));
         *nonce_slot = nonce;
         signature_t final_hash;
         sha512(block_hash.data(), block_hash.size(), final_hash.data());
@@ -167,7 +187,7 @@ namespace ic
             }
         }
 
-		if (m_mining)
+		if (m_mining && m_validated)
 		{
 			Log->warn("Mining ended with nonce {}", m_nonce);
 			const signature_t f_hash = get_hash();
@@ -181,6 +201,29 @@ namespace ic
     bool Block::is_valid() const
     {
         return m_validated;
+    }
+
+    bool Block::is_mining() const
+    {
+        return m_mining;
+    }
+
+    unsigned Block::get_tx_amount() const
+    {
+        return m_transactions.size();
+    }
+
+    std::vector<Transaction*> Block::get_transactions() const
+    {
+        std::vector<Transaction*> txs;
+        for (const auto& tx : m_transactions)
+            txs.push_back(tx.get());
+        return txs;
+    }
+
+    unsigned int Block::get_depth() const
+    {
+        return m_depth;
     }
 }
 
