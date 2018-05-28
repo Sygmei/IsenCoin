@@ -629,6 +629,10 @@ namespace ic::ui
                 ImGui::TextWrapped(current_wallet.get_b58_private_key().c_str());
                 ImGui::Text("Wallet Public Key :");
                 ImGui::TextWrapped(current_wallet.get_b58_public_key().c_str());
+                std::string pub_key_copy = current_wallet.get_b58_public_key();
+                ImGui::InputText("Public Key Field", 
+                    pub_key_copy.data(), 
+                    current_wallet.get_b58_public_key().size());
                 ImGui::Text(fmt::format("Wallet balance : {} ic", current_wallet.get_funds()).c_str());
                 if (ImGui::Button("Create A Transaction"))
                 {
