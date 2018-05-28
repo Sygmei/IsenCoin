@@ -239,8 +239,14 @@ namespace ic
         Log->warn("Enabling mining for Block with timestamp {}", m_timestamp);
         if (reward_recv != config::ISENCOIN_NULL_ADDRESS)
         {
+            Log->debug("Sender reward to {}", 
+                base58::encode(reward_recv.data(), reward_recv.data() + reward_recv.size()));
             const Transaction reward_tx(reward_recv);
             add_transaction(reward_tx);
+        }
+        else
+        {
+            Log->warn("No reward for this Block");
         }
         m_mining = true;
         m_sagain = true;

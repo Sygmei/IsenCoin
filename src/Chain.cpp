@@ -98,15 +98,17 @@ namespace ic
             if (get_current_block().get_tx_amount() > 0)
             {
                 get_current_block().interrupt();
-                std::thread mining_thread([&]() {
-                    get_current_block().mine(Block::mining_threads, reward_recv);
+                Log->error("Reward from mine&next {}", base58::encode(reward_recv.data(), reward_recv.data() + reward_recv.size()));
+                std::thread mining_thread([&](public_key_t reward_pub) {
+                    Log->error("Reward from mine&next inthread {}", base58::encode(reward_pub.data(), reward_pub.data() + reward_pub.size()));
+                    get_current_block().mine(Block::mining_threads, reward_pub);
                     if (get_current_block().is_valid())
                     {
                         tracker.propagate(get_current_block().to_msgpack());
                         create_new_block();
                     }
                         
-                });
+                }, reward_recv);
                 mining_thread.detach();
             }
             else

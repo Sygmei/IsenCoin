@@ -110,12 +110,17 @@ namespace ic
         {
             for (const auto& tx : blk->get_transactions())
             {
+                /*Log->warn("Testing {}", tx->as_string());
+                if (tx->is_reward())
+                    Log->error("PAY ATTENTION ======================+>0");*/
                 if (tx->get_sender() == m_public_key)
                 {
+                    //Log->warn("Remove tx amount {}", tx->as_string());
                     funds -= tx->get_amount();
                 }
                 else if (tx->get_receiver() == m_public_key)
                 {
+                    //Log->warn("Add tx amount {}", tx->as_string());
                     funds += tx->get_amount();
                 }
             }

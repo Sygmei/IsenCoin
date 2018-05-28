@@ -363,7 +363,7 @@ namespace ic::ui
                 {
                     if (tx->is_reward())
                     {
-                        reward_to = base58::encode(tx->get_sender().data(), tx->get_sender().data() + tx->get_sender().size());
+                        reward_to = base58::encode(tx->get_receiver().data(), tx->get_receiver().data() + tx->get_receiver().size());
                     }
                 }
                 if (!reward_to.empty())
@@ -490,6 +490,7 @@ namespace ic::ui
                     if (current_wallet.get_funds() >= m_amount)
                     {
                         Chain::Blockchain().get_current_block().add_transaction(new_tx);
+                        Log->error("Mining with reward from ui : {}", current_wallet.get_b58_public_key());
                         Chain::Blockchain().mine_and_next(tracker, false, current_wallet.get_public_key());
                         tracker.propagate(new_tx.to_msgpack());
                         success = 1;
