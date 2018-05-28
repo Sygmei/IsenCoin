@@ -148,13 +148,13 @@ namespace ic
 
     Block::Block(const vili::ComplexNode& node)
     {
-        m_timestamp = node.at<vili::DataNode>("timestamp").get<unsigned long long>();
+        m_timestamp = node.at<vili::DataNode>("timestamp").get<uint64_t>();
         std::string hash_vili = node.at<vili::DataNode>("previous_hash").get<std::string>();
         std::vector<unsigned char> hash_dcode;
         base58::decode(hash_vili.c_str(), hash_dcode);
         std::copy(hash_dcode.begin(), hash_dcode.end(), m_previous_hash.begin());
-        m_depth = node.at<vili::DataNode>("depth").get<unsigned long long>();
-        m_nonce = node.at<vili::DataNode>("nonce").get<unsigned long long>();
+        m_depth = node.at<vili::DataNode>("depth").get<uint64_t>();
+        m_nonce = node.at<vili::DataNode>("nonce").get<uint64_t>();
         if (node.contains("txs"))
         {
             for (const auto* tx : node.at("txs").getAll<vili::ComplexNode>())
@@ -251,7 +251,7 @@ namespace ic
         {
             thread_pool.emplace_back([&](block_hash_t thread_hash, uint8_t starting_index, uint8_t increment_level)
             {
-                unsigned long long nonce = starting_index;
+                uint64_t nonce = starting_index;
   
                 while (m_mining && !m_validated && !is_nonce_valid(thread_hash, nonce))
                 {

@@ -161,7 +161,7 @@ namespace ic
 
     Transaction::Transaction(const vili::ComplexNode& node)
     {
-        m_timestamp = node.at<vili::DataNode>("timestamp").get<unsigned long long>();
+        m_timestamp = node.at<vili::DataNode>("timestamp").get<uint64_t>();
         m_amount = node.at<vili::DataNode>("amount").get<double>();
         std::string sender_vili = node.at<vili::DataNode>("sender").get<std::string>();
         std::vector<unsigned char> sender_dcode;

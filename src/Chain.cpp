@@ -52,7 +52,7 @@ namespace ic
         if (!m_blocks.empty())
             return *m_blocks.back();
         else
-            return Block();
+            return null_block;
     }
 
     Block& Chain::get_block_at_index(unsigned int index)

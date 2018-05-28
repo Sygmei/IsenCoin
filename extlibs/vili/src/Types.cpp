@@ -43,7 +43,7 @@ namespace vili
                 attributeType = DataType::Float;
             else if (Functions::String::isStringInt(var))
             {
-                unsigned long long var_val = std::stoll(var);
+                uint64_t var_val = std::stoll(var);
                 if (var_val > std::numeric_limits<int>::max())
                     attributeType = DataType::Long;
                 else

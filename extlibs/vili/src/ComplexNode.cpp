@@ -232,7 +232,7 @@ namespace vili
         return this->getDataNode(id);
     }
 
-    DataNode& ComplexNode::createDataNode(const std::string& id, unsigned long long data)
+    DataNode& ComplexNode::createDataNode(const std::string& id, uint64_t data)
     {
         if (!this->contains(id))
             m_children.push_back(std::make_unique<DataNode>(this, id, DataType::Long));

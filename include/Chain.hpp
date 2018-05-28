@@ -14,6 +14,7 @@ namespace ic
     {
     private:
         std::vector<std::unique_ptr<Block>> m_blocks;
+        Block null_block;
         static std::unique_ptr<Chain> s_blockchain;
         Chain();
         friend std::unique_ptr<Chain> std::make_unique<Chain>();

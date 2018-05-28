@@ -110,7 +110,8 @@ namespace ic::ui
             public_key_t public_key;
             std::copy(pub_key_dcode.begin(), pub_key_dcode.end(), public_key.begin());
             std::copy(priv_key_dcode.begin(), priv_key_dcode.end(), private_key.begin());
-            add_wallet(wallet->getId(), Wallet(private_key, public_key));
+            Wallet new_wallet(private_key, public_key);
+            add_wallet(wallet->getId(), new_wallet);
         } 
     }
 
@@ -129,7 +130,7 @@ namespace ic::ui
         return m_wallets;
     }
 
-    std::vector<Wallet>& WalletList::get_wallets()
+    std::vector<Wallet> WalletList::get_wallets()
     {
         std::vector<Wallet> result;
         for (const auto& w : m_wallets)
@@ -193,7 +194,7 @@ namespace ic::ui
         return m_addresses;
     }
 
-    std::vector<public_key_t>& AddressBook::get_public_keys()
+    std::vector<public_key_t> AddressBook::get_public_keys()
     {
         std::vector<public_key_t> pkeys;
         for (unsigned int i = 0; i < get_amount(); i++)
@@ -480,7 +481,8 @@ namespace ic::ui
             {
                 ImGui::Text(fmt::format("Sender : {}", sender_name).c_str());
                 ImGui::Text("Receiver :");
-                ImGui::ListBox("##wallet_receiver", &m_selected_receiver, vector_getter, static_cast<void*>(&address_book.get_names()), address_book.get_amount());
+                std::vector<std::string> address_book_names = address_book.get_names();
+                ImGui::ListBox("##wallet_receiver", &m_selected_receiver, vector_getter, static_cast<void*>(&address_book_names), address_book.get_amount());
                 ImGui::InputFloat("Amount", &m_amount);
                 if (ImGui::Button("Send"))
                 {
@@ -598,10 +600,12 @@ namespace ic::ui
                 ImGuiWindowFlags_AlwaysAutoResize |
                 ImGuiWindowFlags_NoCollapse);
             ImGui::Text("Your wallets :");
-            ImGui::ListBox("##Wallets", &selected_wallet, vector_getter, static_cast<void*>(&wallets.get_names()), wallets.get_amount());
+            std::vector<std::string> wallet_names = wallets.get_names();
+            ImGui::ListBox("##Wallets", &selected_wallet, vector_getter, static_cast<void*>(&wallet_names), wallets.get_amount());
             if (ImGui::Button("Create a wallet")) wallet_creation_win.toggle();
             ImGui::Text("Other's wallets :");
-            ImGui::ListBox("##OtherWallets", &selected_other_wallet, vector_getter, static_cast<void*>(&address_book.get_names()), address_book.get_amount());
+            std::vector<std::string> address_book_names = address_book.get_names();
+            ImGui::ListBox("##OtherWallets", &selected_other_wallet, vector_getter, static_cast<void*>(&address_book_names), address_book.get_amount());
             if (ImGui::Button("Add an address")) add_address_win.toggle();
             ImGui::End();
 

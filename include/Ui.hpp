@@ -48,7 +48,7 @@ namespace ic::ui
         std::string get_wallet_name_at_index(unsigned int index);
         Wallet& get_wallet_at_index(unsigned int index);
         std::vector<std::pair<std::string, Wallet>>& get();
-        std::vector<Wallet>& get_wallets();
+        std::vector<Wallet> get_wallets();
         std::vector<std::string> get_names();
         unsigned int get_amount() const;
         void add_wallet(const std::string& name, Wallet& wallet);
@@ -64,7 +64,7 @@ namespace ic::ui
         std::string get_address_name_at_index(unsigned int index);
         public_key_t get_public_key_at_index(unsigned int index);
         std::vector<std::pair<std::string, std::string>>& get();
-        std::vector<public_key_t>& get_public_keys();
+        std::vector<public_key_t> get_public_keys();
         std::vector<std::string> get_names();
         unsigned int get_amount() const;
         void add_address(const std::string& name, const std::string& public_key);

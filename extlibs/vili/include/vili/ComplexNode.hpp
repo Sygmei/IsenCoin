@@ -217,7 +217,7 @@ namespace vili
         * \return A reference to the newly created DataNode
         */
         DataNode& createDataNode(const std::string& id, double data);
-        DataNode& createDataNode(const std::string& id, unsigned long long data);
+        DataNode& createDataNode(const std::string& id, uint64_t data);
         /**
          * \brief Pushes an existing DataNode in the ComplexNode
          * \param attribute Pointer to the DataNode to push to the ComplexNode
