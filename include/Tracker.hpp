@@ -25,6 +25,8 @@ namespace ic
         bool contains_node(Node node);
         std::vector<Node>& get_nodes();
         void set_port(uint16_t port);
+        uint16_t get_port();
         void remove_node_at_index(unsigned int index);
+        void send(const Node& node, const mp::MsgPack& msg) const;
     };
 }

@@ -42,7 +42,9 @@ namespace ic::ui
     {
     private:
         std::vector<std::pair<std::string, Wallet>> m_wallets;
+        void save();
     public:
+        WalletList();
         std::string get_wallet_name_at_index(unsigned int index);
         Wallet& get_wallet_at_index(unsigned int index);
         std::vector<std::pair<std::string, Wallet>>& get();
@@ -56,7 +58,9 @@ namespace ic::ui
     {
     private:
         std::vector<std::pair<std::string, std::string>> m_addresses;
+        void save();
     public:
+        AddressBook();
         std::string get_address_name_at_index(unsigned int index);
         public_key_t get_public_key_at_index(unsigned int index);
         std::vector<std::pair<std::string, std::string>>& get();
@@ -78,6 +82,16 @@ namespace ic::ui
         void update(WalletList& wallets, AddressBook& address_book);
     };
 
+    class AddAddressWindow : public UiWindow
+    {
+    private:
+        std::string pub_key_input;
+        std::string key_name_input;
+    public:
+        AddAddressWindow();
+        void update(AddressBook& address_book);
+    };
+
     class TxDisplayWindow : public UiWindow
     {
     private:
@@ -95,6 +109,7 @@ namespace ic::ui
         Block* m_block;
         std::vector<std::unique_ptr<UiWindow>>* m_free_windows;
         int m_selected_tx = 0;
+        std::string merkle_root_b58;
     public:
         TxExplorerWindow(std::vector<std::unique_ptr<UiWindow>>* windows, Block& block);
         void update() override;
@@ -128,7 +143,7 @@ namespace ic::ui
         int success = 0;
     public:
         TxCreateWindow();
-        void update(const std::string& sender_name, Wallet& current_wallet, AddressBook& address_book);
+        void update(const std::string& sender_name, Wallet& current_wallet, AddressBook& address_book, Tracker& tracker);
     };
 
     void main(Tracker& tracker);

@@ -79,6 +79,14 @@ namespace vili
             throw aube::ErrorHandler::Raise("Vili.Vili.DataNode.WrongBoolSet", {{"path", getNodePath()},{"type", Types::dataTypeToString(m_dataType)}});
     }
 
+    void DataNode::set(unsigned long long var)
+    {
+        if (m_dataType == DataType::Long)
+            m_data = var;
+        else
+            throw aube::ErrorHandler::Raise("Vili.Vili.DataNode.WrongLongSet", { { "path", getNodePath() },{ "type", Types::dataTypeToString(m_dataType) } });
+    }
+
     void DataNode::operator=(int var)
     {
         this->set(var);
@@ -104,6 +112,11 @@ namespace vili
         this->set(var);
     }
 
+    void DataNode::operator=(unsigned long long var)
+    {
+        this->set(var);
+    }
+
     void DataNode::autoset(const std::string& rawData)
     {
         std::string pop = m_id;
@@ -117,6 +130,8 @@ namespace vili
                 m_data = Functions::String::extract(rawData, 1, 1);
             else if (m_dataType == DataType::Bool)
                 m_data = (rawData == "True" ? true : false);
+            else if (m_dataType == DataType::Long)
+                m_data = stoull(rawData);
         }
         else
             throw aube::ErrorHandler::Raise("Vili.Vili.DataNode.WrongAutoset", {{"data", rawData},{"path", getNodePath()}});
@@ -132,6 +147,8 @@ namespace vili
             return std::to_string(std::get<double>(m_data));
         if (m_dataType == DataType::Bool)
             return (std::get<bool>(m_data) ? "True" : "False");
+        if (m_dataType == DataType::Long)
+            return std::to_string(std::get<unsigned long long>(m_data));
         return "?TypeError?";
     }
 

@@ -14,7 +14,7 @@ namespace vili
     class DataNode : public Node
     {
     protected:
-        std::variant<int, double, bool, std::string> m_data;
+        std::variant<int, double, bool, std::string, unsigned long long> m_data;
         /**
          * \brief The DataType of the DataNode
          */
@@ -76,6 +76,7 @@ namespace vili
         * \param var A bool value
         */
         void set(bool var);
+        void set(unsigned long long var);
         /**
         * \brief Sets an Int value
         * \param var An int value
@@ -101,6 +102,7 @@ namespace vili
         * \param var A bool value
         */
         void operator=(bool var);
+        void operator=(unsigned long long var);
         /**
          * \brief Automatically determines the DataType and affects the value
          * \param rawData Value to set (String must be dumpable representation)
@@ -155,6 +157,8 @@ namespace vili
         * \brief Returns the Data contained in the DataNode casted to a bool
         */
         operator bool() const;
+
+        operator unsigned long long() const;
     };
 
     /**
@@ -172,6 +176,8 @@ namespace vili
             return std::get<int>(m_data);
         if (m_dataType == DataType::Float)
             return std::get<double>(m_data);
+        if (m_dataType == DataType::Long)
+            return std::get<unsigned long long>(m_data);
         throw aube::ErrorHandler::Raise("Vili.ViliHeader.DataNode.WrongIntCast", {{"path", getNodePath()},{"type", Types::dataTypeToString(m_dataType)}});
     }
 
@@ -182,6 +188,8 @@ namespace vili
             return std::get<double>(m_data);
         if (m_dataType == DataType::Int)
             return std::get<int>(m_data);
+        if (m_dataType == DataType::Long)
+            return std::get<unsigned long long>(m_data);
         throw aube::ErrorHandler::Raise("Vili.ViliHeader.DataNode.WrongFloatCast", {{"path", getNodePath()},{"type", Types::dataTypeToString(m_dataType)}});
     }
 
@@ -191,6 +199,18 @@ namespace vili
         if (m_dataType == DataType::Bool)
             return std::get<bool>(m_data);
         throw aube::ErrorHandler::Raise("Vili.ViliHeader.DataNode.WrongBoolCast", {{"path", getNodePath()},{"type", Types::dataTypeToString(m_dataType)}});
+    }
+
+    template <>
+    inline unsigned long long DataNode::get() const
+    {
+        if (m_dataType == DataType::Float)
+            return std::get<double>(m_data);
+        if (m_dataType == DataType::Int)
+            return std::get<int>(m_data);
+        if (m_dataType == DataType::Long)
+            return std::get<unsigned long long>(m_data);
+        throw aube::ErrorHandler::Raise("Vili.ViliHeader.DataNode.WrongLongCast", { { "path", getNodePath() },{ "type", Types::dataTypeToString(m_dataType) } });
     }
 
     template <>

@@ -8,7 +8,8 @@ namespace ic::config
     constexpr uint16_t DEFAULT_PORT = 15317;
     constexpr uint8_t ISENCOIN_VERSION = 1;
     constexpr float ISENCOIN_REWARD = 10;
-    constexpr uint8_t ISENCOIN_DIFFICULTY = 6;
+    constexpr uint8_t ISENCOIN_DIFFICULTY = 5;
+    constexpr uint8_t DEFAULT_THREADS = 1;
 #ifdef _WIN32
     constexpr const char* DEFAULT_BIND = "";
 #else

@@ -7,6 +7,9 @@
 #include <Types.hpp>
 #include <Wallet.hpp>
 
+
+#include <vili/ComplexNode.hpp>
+
 namespace ic
 {
     namespace mp = msgpack11;
@@ -21,6 +24,8 @@ namespace ic
     public:
         static signature_t get_merkel_root(const std::vector<signature_t>& signatures);
         static signature_t combine(const signature_t& signature1, const signature_t& signature2);
+        Transaction(const mp::MsgPack& msg);
+        Transaction(const vili::ComplexNode& node);
         Transaction(const Transaction& tx);
         Transaction(const Wallet& sender, const Wallet& receiver, float amount);
         Transaction(public_key_t receiver);
@@ -38,8 +43,10 @@ namespace ic
         void corrupt();
         std::string as_string() const;
         std::string get_signable_transaction_message();
+        std::string get_b58_signature() const;
         //float balance(int address);
         bool is_reward() const;
+        void dump(vili::ComplexNode& node);
         static p2p::Requirements Fields;
     };
 }

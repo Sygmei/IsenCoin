@@ -42,7 +42,7 @@ public:
         BINARY,
         ARRAY,
         OBJECT,
-        EXTENSION
+        EXTENSION,
     };
 
     // Array and object typedefs

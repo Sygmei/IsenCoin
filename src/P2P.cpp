@@ -125,7 +125,41 @@ namespace ic::p2p
     bool check_requirement(const std::string& name, const mp::MsgPack& msg, Requirement req)
     {
         if (req.type != msg.type())
-            throw except::MessageRequirementException(name, msgpack_type_to_string(req.type), msgpack_type_to_string(msg.type()));
+        {
+            if (
+                ((req.type == mp::MsgPack::Type::UINT64)
+                    && (
+                        msg.type() != mp::MsgPack::Type::UINT32
+                        && msg.type() != mp::MsgPack::Type::UINT16
+                        && msg.type() != mp::MsgPack::Type::UINT8)
+                    )
+                || ((req.type == mp::MsgPack::Type::UINT32)
+                    && (
+                        msg.type() != mp::MsgPack::Type::UINT16
+                        && msg.type() != mp::MsgPack::Type::UINT8))
+                || ((req.type == mp::MsgPack::Type::UINT16)
+                    && (
+                        msg.type() != mp::MsgPack::Type::UINT8))
+                || ((req.type == mp::MsgPack::Type::INT64)
+                    && (
+                        msg.type() != mp::MsgPack::Type::INT32
+                        && msg.type() != mp::MsgPack::Type::INT16
+                        && msg.type() != mp::MsgPack::Type::INT8)
+                    )
+                || ((req.type == mp::MsgPack::Type::INT32)
+                    && (
+                        msg.type() != mp::MsgPack::Type::INT16
+                        && msg.type() != mp::MsgPack::Type::INT8))
+                || ((req.type == mp::MsgPack::Type::INT16)
+                    && (
+                        msg.type() != mp::MsgPack::Type::INT8))
+                || ((req.type == mp::MsgPack::Type::FLOAT64)
+                    && (
+                        msg.type() != mp::MsgPack::Type::FLOAT32)))
+                throw except::MessageRequirementException(name, msgpack_type_to_string(req.type), msgpack_type_to_string(msg.type()));
+            else
+                Log->warn("Used type {} instead of required type {}", msgpack_type_to_string(msg.type()), msgpack_type_to_string(req.type));
+        }
         if (!req.check_if_needed(msg))
             throw except::MessageRequirementCustomCheckException(name);
     }

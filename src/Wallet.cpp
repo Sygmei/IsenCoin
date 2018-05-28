@@ -33,7 +33,7 @@ namespace ic
             std::copy(std::begin(private_key), std::end(private_key), std::begin(m_private_key));
             std::copy(std::begin(public_key), std::end(public_key), std::begin(m_public_key));
         } while (this->get_b58_public_key().rfind(prefix, 0) != 0);
-        std::cout << "FOUND ADDRESS : " << this->get_b58_public_key() << std::endl;
+        Log->debug("Generated valid address : ", this->get_b58_public_key());
     }
 
     Wallet::Wallet(const Wallet& wallet)

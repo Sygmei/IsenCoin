@@ -30,6 +30,7 @@ namespace vili
          * \brief An Integer value
          */
         Int,
+        Long,
         /**
          * \brief A Floating-point value
          */

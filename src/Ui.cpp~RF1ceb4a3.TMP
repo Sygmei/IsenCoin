@@ -5,7 +5,6 @@
 #include <imgui/imgui-SFML.h>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
-#include "vili/ViliParser.hpp"
 
 namespace ic::ui
 {
@@ -82,38 +81,6 @@ namespace ic::ui
         return m_opened;
     }
 
-    void WalletList::save()
-    {
-        vili::ViliParser dump_wallets;
-        for (const auto& wallet : m_wallets)
-        {
-            dump_wallets->createComplexNode(wallet.first);
-            dump_wallets->at(wallet.first).createDataNode("public", wallet.second.get_b58_public_key());
-            dump_wallets->at(wallet.first).createDataNode("private", wallet.second.get_b58_private_key());
-        }
-        dump_wallets.writeFile("wallets.vili");
-    }
-
-    WalletList::WalletList()
-    {
-        vili::ViliParser load_wallets;
-        load_wallets.parseFile("wallets.vili");
-        for (const auto* wallet : load_wallets->getAll<vili::ComplexNode>())
-        {
-            std::vector<unsigned char> pub_key_dcode;
-            std::vector<unsigned char> priv_key_dcode;
-            std::string pub_key_vili = wallet->at<vili::DataNode>("public").get<std::string>();
-            std::string priv_key_vili = wallet->at<vili::DataNode>("private").get<std::string>();
-            base58::decode(pub_key_vili.c_str(), pub_key_dcode);
-            base58::decode(priv_key_vili.c_str(), priv_key_dcode);
-            private_key_t private_key;
-            public_key_t public_key;
-            std::copy(pub_key_dcode.begin(), pub_key_dcode.end(), public_key.begin());
-            std::copy(priv_key_dcode.begin(), priv_key_dcode.end(), private_key.begin());
-            add_wallet(wallet->getId(), Wallet(private_key, public_key));
-        } 
-    }
-
     std::string WalletList::get_wallet_name_at_index(unsigned index)
     {
         return m_wallets[index].first;
@@ -155,23 +122,6 @@ namespace ic::ui
     void WalletList::add_wallet(const std::string& name, Wallet& wallet)
     {
         m_wallets.emplace_back(name, wallet);
-        save();
-    }
-
-    void AddressBook::save()
-    {
-        vili::ViliParser dump_addresses;
-        for (const auto& address : m_addresses)
-            dump_addresses->createDataNode(address.first, address.second);
-        dump_addresses.writeFile("addresses.vili");
-    }
-
-    AddressBook::AddressBook()
-    {
-        vili::ViliParser load_addresses;
-        load_addresses.parseFile("addresses.vili");
-        for (const auto* address : load_addresses->getAll<vili::DataNode>())
-            add_address(address->getId(), address->get<std::string>());
     }
 
     std::string AddressBook::get_address_name_at_index(unsigned int index)
@@ -217,7 +167,6 @@ namespace ic::ui
     void AddressBook::add_address(const std::string& name, const std::string& public_key)
     {
         m_addresses.emplace_back(name, public_key);
-        save();
     }
 
     CreateWalletWindow::CreateWalletWindow() : UiWindow("Wallet Creation")
@@ -337,8 +286,6 @@ namespace ic::ui
         m_block = &block;
         m_free_windows = windows;
         m_opened = true;
-        signature_t merkle_root = m_block->calculate_merkle_root();
-        merkle_root_b58 = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());
     }
 
     void TxExplorerWindow::update()
@@ -350,25 +297,13 @@ namespace ic::ui
                 ImGuiWindowFlags_NoSavedSettings |
                 ImGuiWindowFlags_AlwaysAutoResize);
             ImGui::Text(fmt::format("Block Depth : {}", m_block->get_depth()).c_str());
+            ImGui::Text(fmt::format("Block hash : {}", m_block->get_hex_hash()).c_str());
             ImGui::Text(fmt::format("Validity : {}", m_block->is_valid() ? "Valid" : "Invalid").c_str());
-            ImGui::TextWrapped(fmt::format("Block Merkle Root : {}", merkle_root_b58).c_str());
             if (m_block->is_valid())
             {
                 ImGui::Text(fmt::format("Block nonce : {}", m_block->get_nonce()).c_str());
-                ImGui::Text(fmt::format("Block timestamp : {}", m_block->get_timestamp()).c_str());
-                ImGui::TextWrapped(fmt::format("Block hash : {}", m_block->get_hex_hash()).c_str());
-                std::string reward_to;
-                for (const auto& tx : m_block->get_transactions())
-                {
-                    if (tx->is_reward())
-                    {
-                        reward_to = base58::encode(tx->get_sender().data(), tx->get_sender().data() + tx->get_sender().size());
-                    }
-                }
-                if (!reward_to.empty())
-                    ImGui::Text(fmt::format("Reward to : {}", reward_to).c_str());
+                ImGui::Text(fmt::format("Block timestamp : {}", m_block.get_timestamp()));
             }
-            ImGui::Text(fmt::format("Transaction amount : {}", m_block->get_tx_amount()).c_str());
             ImGui::Text("Transaction List : ");
             std::vector<std::string> tx_list;
             for (const auto& tx : m_block->get_transactions())
@@ -488,7 +423,6 @@ namespace ic::ui
                     if (current_wallet.get_funds() >= m_amount)
                     {
                         Chain::Blockchain().get_current_block().add_transaction(new_tx);
-                        Chain::Blockchain().mine_and_next(tracker, false, current_wallet.get_public_key());
                         tracker.propagate(new_tx.to_msgpack());
                         success = 1;
                     }
@@ -563,6 +497,16 @@ namespace ic::ui
         int tracker_port_input = tracker.get_port();
         int threads_input = 1;
         sf::Texture mining_status_tex;
+
+        Wallet myWallet;
+        Wallet myWallet2;
+        myWallet.generate();
+        myWallet2.generate();
+
+        Transaction tx(myWallet, myWallet2, 22);
+        Transaction tx2(myWallet2, myWallet, 11);
+        Chain::Blockchain().get_current_block().add_transaction(tx);
+        Chain::Blockchain().get_current_block().add_transaction(tx2);
 
         mining_status_tex.loadFromFile("ui/cog.png");
 
@@ -682,7 +626,7 @@ namespace ic::ui
                 ImGuiWindowFlags_NoCollapse); 
             ImGui::Text(fmt::format("Pending Transactions : {}", Chain::Blockchain().get_current_block().get_tx_amount()).c_str());
             ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.6f);
-            ImGui::SliderInt("Threads", &Block::mining_threads, 1, 8);
+            ImGui::SliderInt("Threads", &threads_input, 1, 8);
             ImGui::PopItemWidth();
             ImGui::Checkbox("Start Mining Automatically", &Chain::Blockchain().auto_mining);
             if (Chain::Blockchain().auto_mining)
@@ -699,10 +643,10 @@ namespace ic::ui
                     if (wallets.get_amount() > 0 && selected_wallet >= 0)
                     {
                         Wallet& current_wallet = wallets.get_wallet_at_index(selected_wallet);
-                        Chain::Blockchain().mine_and_next(tracker, true, current_wallet.get_public_key());
+                        Chain::Blockchain().mine_and_next(true, current_wallet.get_public_key());
                     }
                     else
-                        Chain::Blockchain().mine_and_next(tracker, true);
+                        Chain::Blockchain().mine_and_next(true);
                 }
             }
             ImGui::Text("Mining status :");
@@ -718,8 +662,6 @@ namespace ic::ui
             }
             if (ImGui::Button("Block Explorer"))
                 blockchain_exp_win.toggle();
-            if (ImGui::Button("Force Sync"))
-                Chain::Blockchain().fetch_genesis(tracker);
             ImGui::End();
 
             wallet_creation_win.update(wallets, address_book);

@@ -46,13 +46,6 @@ int main(int argc, char** argv)
     using namespace ic;
     using namespace msgpack11;
 
-    public_key_t pukey;
-    private_key_t prikey;
-    std::array<unsigned char, 32> zero_seed = {};
-    ed25519_create_keypair(pukey.data(), prikey.data(), zero_seed.data());
-    std::cout << "PUBLIC : " << char_array_to_hex(pukey) << std::endl;
-    std::cout << "PRIVATE : " << char_array_to_hex(prikey) << std::endl;
-
     unsigned int port;
     if (cmdl("port"))
     {
@@ -78,55 +71,6 @@ int main(int argc, char** argv)
     Chain::Initialize_Blockchain();
 
     ui::main(tracker);
-
-    Log->critical("Size of uint64_t : {}", sizeof(uint64_t));
-
-    Wallet myWallet;
-    Wallet myWallet2;
-
-    std::cout << "Starting IsenCoin Program..." << std::endl;
-    std::cout << "Benchmarking Wallet creation..." << std::endl;
-    const size_t prefix_size = cmdl("prefix").str().size();
-    const uint64_t input_seconds = (double(std::pow(58, prefix_size)) * Wallet::Benchmark()) / 1000000.0;
-    const uint64_t days = input_seconds / 60 / 60 / 24;
-    const uint64_t hours = (input_seconds / 60 / 60) % 24;
-    const uint64_t minutes = (input_seconds / 60) % 60;
-    const uint64_t seconds = input_seconds % 60;
-    std::cout << "Asked prefix will take approximatively " << days << "d " << hours << "h " << minutes << "m " << seconds << "s" << std::endl;
-
-    myWallet.generate(cmdl("prefix").str());
-    myWallet2.generate(cmdl("prefix2").str());
-
-    
-    Transaction tx(myWallet, myWallet2, 22);
-    tx.validate();
-    tracker.propagate(tx.to_msgpack());
-
-    /*Chain chain;
-
-    auto pub = myWallet.get_public_key();
-    std::string str_pub(std::begin(pub), std::end(pub));
-
-    std::vector<Transaction> txs;
-    for (unsigned int i = 1; i < 6; i++)
-    {
-        txs.emplace_back(myWallet, myWallet2, i);
-    }
-    std::vector<signature_t> sgns;
-    for (Transaction& tx : txs)
-    {
-        tx.validate();
-        sgns.emplace_back(tx.get_signature());
-    }*/
-    /*Block genesis;
-    genesis.mine(8);
-    Log->error("Genesis found !");
-    Block blk(genesis, txs);
-    blk.mine(8);*/
-
-    /*signature_t merkle_root = Transaction::get_merkel_root(sgns);
-    const std::string merkle_root_str = base58::encode(merkle_root.data(), merkle_root.data() + merkle_root.size());
-    std::cout << "Merkel Root is : " << merkle_root_str << std::endl;*/
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);

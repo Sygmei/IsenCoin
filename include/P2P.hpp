@@ -7,6 +7,7 @@
 
 #include <msgpack11/msgpack11.hpp>
 #include <tacopie/network/tcp_socket.hpp>
+#include "base58/base58.hpp"
 
 namespace tacopie
 {
@@ -49,4 +50,14 @@ namespace ic::p2p
     mp::MsgPack build_msg(const std::string& type, mp::MsgPack::object fields = {});
     void send_msg(tacopie::tcp_socket& socket, const mp::MsgPack& msg);
     mp::MsgPack recv_msg(tacopie::tcp_socket& socket, size_t max_size);
+    template <size_t N>
+    void decode_b58(const std::string& message, std::array<unsigned char, N>& tarray);
+
+    template <size_t N>
+    void decode_b58(const std::string& message, std::array<unsigned char, N>& tarray)
+    {
+        std::vector<unsigned char> buffer;
+        base58::decode(message.c_str(), buffer);
+        std::copy(buffer.begin(), buffer.end(), tarray.begin());
+    }
 }

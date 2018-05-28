@@ -52,8 +52,6 @@ namespace ic
             sender.get_public_key().data(), 
             sender.get_private_key().data()
         );
-
-        std::cout << this->as_string() << std::endl;
     }
 
     Transaction::Transaction(public_key_t receiver)
@@ -105,9 +103,6 @@ namespace ic
     bool Transaction::validate()
     {
         std::string tx_sign_message = this->get_signable_transaction_message();
-        std::cout << "TSM : " << tx_sign_message << std::endl;
-        std::cout << "TSM Size : " << tx_sign_message.size() << std::endl;
-        std::cout << "TSM HEX : " << char_array_to_hex(tx_sign_message) << std::endl;
         if (ed25519_verify(m_signature.data(), reinterpret_cast<const unsigned char*>(tx_sign_message.c_str()), tx_sign_message.size(), m_sender.data()))
         {
             Log->info("Valid Transaction ! {}", this->as_string());
@@ -151,6 +146,35 @@ namespace ic
         std::copy(signature2.begin(), signature2.end(), input.begin() + signature1.size());
         sha512(input.data(), input.size(), result.data());
         return result;
+    }
+
+    Transaction::Transaction(const mp::MsgPack& msg)
+    {
+        Log->warn("Building Tx from MsgPack : {}", msg.dump());
+        p2p::decode_b58(msg["sender"].string_value(), m_sender);
+        p2p::decode_b58(msg["receiver"].string_value(), m_receiver);
+        p2p::decode_b58(msg["signature"].string_value(), m_signature);
+
+        m_amount = msg["amount"].float32_value();
+        m_timestamp = msg["timestamp"].uint64_value();
+    }
+
+    Transaction::Transaction(const vili::ComplexNode& node)
+    {
+        m_timestamp = node.at<vili::DataNode>("timestamp").get<unsigned long long>();
+        m_amount = node.at<vili::DataNode>("amount").get<double>();
+        std::string sender_vili = node.at<vili::DataNode>("sender").get<std::string>();
+        std::vector<unsigned char> sender_dcode;
+        base58::decode(sender_vili.c_str(), sender_dcode);
+        std::copy(sender_dcode.begin(), sender_dcode.end(), m_sender.begin());
+        std::string receiver_vili = node.at<vili::DataNode>("receiver").get<std::string>();
+        std::vector<unsigned char> receiver_dcode;
+        base58::decode(receiver_vili.c_str(), receiver_dcode);
+        std::copy(receiver_dcode.begin(), receiver_dcode.end(), m_receiver.begin());
+        std::string signature_vili = node.at<vili::DataNode>("signature").get<std::string>();
+        std::vector<unsigned char> signature_dcode;
+        base58::decode(signature_vili.c_str(), signature_dcode);
+        std::copy(signature_dcode.begin(), signature_dcode.end(), m_signature.begin());
     }
 
     const signature_t& Transaction::get_signature() const
@@ -227,9 +251,25 @@ namespace ic
         return ss.str();
     }
 
+    std::string Transaction::get_b58_signature() const
+    {
+        return base58::encode(m_signature.data(), m_signature.data() + m_signature.size());
+    }
+
     bool Transaction::is_reward() const
     {
         return (m_sender == config::ISENCOIN_NULL_ADDRESS);
+    }
+
+    void Transaction::dump(vili::ComplexNode& node)
+    {
+        vili::ComplexNode& tx = node.createComplexNode(this->get_printable_signature());
+        tx.createDataNode("timestamp", m_timestamp);
+        tx.createDataNode("amount", m_amount);
+        tx.createDataNode("sender", base58::encode(m_sender.data(), m_sender.data() + m_sender.size()));
+        tx.createDataNode("receiver", base58::encode(m_receiver.data(), m_receiver.data() + m_receiver.size()));
+        tx.createDataNode("signature", get_b58_signature());
+        
     }
 
     signature_t Transaction::get_merkel_root(const std::vector<signature_t>& signatures)
@@ -250,22 +290,20 @@ namespace ic
             signature_t even_signature;
             if (signatures_out.size() % 2 != 0)
             {
-                std::cout << "Even amount of signatures, copying last one..." << std::endl;
+                Log->trace("Even amount of signatures, copying last one...");
                 signatures_out.push_back(signatures_out.back());
             }
             for (unsigned int i = 0; i < signatures_out.size(); i += 2)
             {
                 signature_t& combine_result = signatures_buffer.emplace_back(Transaction::combine(signatures_out[i], signatures_out[i + 1]));
-                std::cout << "Combine : "
-                    << base58::encode(signatures_out[i].data(), signatures_out[i].data() + signatures_out[i].size())
-                    << " and "
-                    << base58::encode(signatures_out[i + 1].data(), signatures_out[i + 1].data() + signatures_out[i + 1].size()) << std::endl;
-
-                std::cout << "  => Got signature : " << base58::encode(combine_result.data(), combine_result.data() + combine_result.size()) << std::endl;
+                Log->trace("Combine : {} and {} = {}",
+                    base58::encode(signatures_out[i].data(), signatures_out[i].data() + signatures_out[i].size()),
+                    base58::encode(signatures_out[i + 1].data(), signatures_out[i + 1].data() + signatures_out[i + 1].size()),
+                    base58::encode(combine_result.data(), combine_result.data() + combine_result.size()));
             }
             signatures_out = signatures_buffer;
             signatures_buffer.clear();
-            std::cout << "<== BRANCH END ==>" << std::endl;
+            Log->trace("<== BRANCH END ==>");
         }
 
         return signatures_out[0];

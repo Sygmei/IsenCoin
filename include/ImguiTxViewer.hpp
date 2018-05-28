@@ -171,6 +171,12 @@ namespace ImGui::ext
                     ImGui::PopStyleColor();
                 }
                 ImGui::TextWrapped(fmt::format("Signature : {}", tx->get_printable_signature()).c_str());
+                ImGui::TextWrapped(fmt::format(
+                    "Signature b58 : {}", 
+                    base58::encode(
+                        tx->get_signature().data(), 
+                        tx->get_signature().data() + tx->get_signature().size())).c_str()
+                );
                 ImGui::Text("Raw Memory View");
                 DrawContents(mem_data, mem_size, base_display_addr);
                 if (ContentsWidthChanged)

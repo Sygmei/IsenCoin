@@ -232,6 +232,14 @@ namespace vili
         return this->getDataNode(id);
     }
 
+    DataNode& ComplexNode::createDataNode(const std::string& id, unsigned long long data)
+    {
+        if (!this->contains(id))
+            m_children.push_back(std::make_unique<DataNode>(this, id, DataType::Long));
+        this->getDataNode(id).set(data);
+        return this->getDataNode(id);
+    }
+
     DataNode& ComplexNode::pushDataNode(DataNode* attribute)
     {
         attribute->setParent(this);
@@ -295,7 +303,6 @@ namespace vili
 
     void ComplexNode::write(std::ofstream* file, const std::string& spacing, unsigned int depth) const
     {
-        std::cout << "Writing : " << m_id << " with visibility " << m_visible << std::endl;
         if (m_visible && depth > 0)
         {
             for (unsigned int i = 0; i < depth - 1; i++)

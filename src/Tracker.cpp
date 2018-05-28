@@ -41,7 +41,7 @@ namespace ic
                 mp::MsgPack msg;
                 try
                 {
-                    client.connect(node.get_address(), node.get_port(), 100000);
+                    client.connect(node.get_address(), node.get_port(), 10000);
                     Log->info("(Client) Connected to server {}:{}", node.get_address(), node.get_port());
                 }
                 catch (const std::exception& e)
@@ -112,25 +112,11 @@ namespace ic
         // @On "Transaction" Message
         p2p::use_msg(msg, "transaction", [&](const auto& msg)
         {
-            std::vector<unsigned char> t_sender;
-            base58::decode(msg["sender"].string_value(), t_sender);
-            std::vector<unsigned char> t_receiver;
-            base58::decode(msg["receiver"].string_value(), t_receiver);
-            amount_t f_amount = msg["amount"].float32_value();
-            timestamp_t f_timestamp = msg["timestamp"].uint64_value();
-            std::vector<unsigned char> t_signature;
-            base58::decode(msg["signature"].string_value(), t_signature);
-            public_key_t f_sender;
-            std::copy(t_sender.begin(), t_sender.end(), f_sender.begin());
-            public_key_t f_receiver;
-            std::copy(t_receiver.begin(), t_receiver.end(), f_receiver.begin());
-            signature_t f_signature;
-            std::copy(t_signature.begin(), t_signature.end(), f_signature.begin());
-            Transaction tx(f_sender, f_receiver, f_amount, f_timestamp, f_signature);
-            Log->debug("Validating Peer Transaction...");
+            Transaction tx(msg);
+            Log->warn("Just received transaction : {} ==> {}", tx.as_string(), msg.dump());
             tx.validate();
             Chain::Blockchain().get_current_block().add_transaction(tx);
-            Chain::Blockchain().mine_and_next();
+            Chain::Blockchain().mine_and_next(*this);
         }, [&]()
         {
             Log->warn("(Server) Received invalid Transaction from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());
@@ -144,6 +130,57 @@ namespace ic
         {
             Log->warn("(Server) Received invalid Peer from {}:{} : '{}'", client.get_host(), client.get_port(), msg.dump());
         }, Node::Fields);
+        p2p::use_msg(msg, "block", [&](const auto& msg)
+        {
+            Log->warn("(Server) Received valid block ! {}", msg.dump());
+            signature_t previous_hash;
+            p2p::decode_b58(msg["previous_hash"].string_value(), previous_hash);
+            std::vector<Transaction> txs;
+            for (const auto& tx : msg["txs"].array_items())
+            {
+                txs.emplace_back(tx);
+            }
+            Block new_blk(msg["depth"].uint64_value(), previous_hash, msg["nonce"].uint64_value(), msg["timestamp"].uint64_value(), txs);
+            if (new_blk.get_depth() == Chain::Blockchain().get_blockchain_size())
+            {
+                Chain::Blockchain().set_new_block(new_blk);
+                if (msg["asked"].bool_value())
+                {
+                    p2p::send_msg(client.get_socket(), Chain::Blockchain().get_blockchain_size());
+                }
+            }
+            else
+                Log->error("Incompatible Block Depth '{}' with Local Blockchain size : {}", new_blk.get_depth(), Chain::Blockchain().get_blockchain_size());
+        }, [&]()
+        {
+            Log->warn("(Server) Receiver invalid Block from {}:{} : '{}' (Size : {})", client.get_host(), client.get_port(), msg.dump(), msg.dump().size());
+        }, Block::Fields);
+        p2p::use_msg(msg, "ask_block", [&](const auto& msg)
+        {
+            uint64_t asked_depth = msg["depth"].uint64_value();
+            if (asked_depth < Chain::Blockchain().get_blockchain_size())
+            {
+                mp::MsgPack msg_back = Chain::Blockchain().get_block_at_index(asked_depth).to_msgpack(true);
+                Log->info("Asked block {} found in Blockchain, sending.. {}", asked_depth, msg_back.dump());
+                send(Node(client.get_host(), client.get_port()), msg_back);
+            }
+            else
+            {
+                Log->error("Invalid AskBlock Index {} VS Blockchain size {}", asked_depth, Chain::Blockchain().get_blockchain_size());
+                mp::MsgPack msg_back = p2p::build_msg("no_block");
+                p2p::send_msg(client.get_socket(), msg_back);
+            }
+        }, [&]()
+        {
+            Log->error("(Server) Receiver invalid AskBlock from {}:{} : '{}' (Size : {})", client.get_host(), client.get_port(), msg.dump(), msg.dump().size());
+        }, { { "depth", mp::MsgPack::Type::UINT64 } });
+        p2p::use_msg(msg, "no_block", [&](const auto& msg)
+        {
+            Log->info("No more Block to update");
+        }, [&]()
+        {
+            Log->error("(Server) Receiver invalid NoBlock from {}:{} : '{}' (Size : {})", client.get_host(), client.get_port(), msg.dump(), msg.dump().size());
+        });
     }
 
     bool Tracker::contains_node(Node node)
@@ -165,8 +202,20 @@ namespace ic
         start_server();
     }
 
+    uint16_t Tracker::get_port()
+    {
+        return m_port;
+    }
+
     void Tracker::remove_node_at_index(unsigned int index)
     {
         m_nodes.erase(m_nodes.begin() + index);
+    }
+
+    void Tracker::send(const Node& node, const mp::MsgPack& msg) const
+    {
+        tacopie::tcp_client client;
+        client.connect(node.get_address(), node.get_port(), 1000);
+        p2p::send_msg(client.get_socket(), msg);
     }
 }
