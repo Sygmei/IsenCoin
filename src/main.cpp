@@ -65,8 +65,8 @@ int main(int argc, char** argv)
     Tracker tracker(port);
     vili::ViliParser config_file;
     config_file.parseFile("config.vili");
-    for (const vili::DataNode* ip : config_file.at<vili::ArrayNode>("ips"))
-        tracker.add_node(Node(ip->get<std::string>()));
+    for (const vili::DataNode& ip : config_file.at<vili::ArrayNode>("ips"))
+        tracker.add_node(Node(ip.get<std::string>()));
 
     Chain::Initialize_Blockchain();
 

@@ -172,4 +172,26 @@ namespace vili
             m_dataList[i]->setParent(this);
         }
     }
+
+    /*
+    ArrayNode::iterator::iterator(ArrayNode& iteratorTarget, unsigned index) : 
+    m_iteratorTarget(iteratorTarget), m_index(index)
+    {
+    }
+
+    ArrayNode::iterator::operator DataNode&()
+    {
+        return m_iteratorTarget[m_index];
+    }
+
+    DataNode& ArrayNode::iterator::operator++()
+    {
+        return m_iteratorTarget[m_index++];
+    }
+
+    bool ArrayNode::iterator::operator!=(iterator& other)
+    {
+        return (&other.m_iteratorTarget != &m_iteratorTarget || other.m_index != m_index);
+    }
+     */
 }

@@ -19,6 +19,18 @@ namespace vili
         std::vector<DataNode*> m_iteratorCache;
         void reorder(int index);
     public:
+        /*class iterator
+        {
+        private:
+            ArrayNode& m_iteratorTarget;
+            int m_index;
+            iterator(ArrayNode& iteratorTarget, unsigned int index);
+            friend class ArrayNode;
+        public:
+            operator DataNode&();
+            DataNode& operator++();
+            bool operator!=(iterator& other);
+        };*/
         /**
          * \brief Redefines the ClassType to ArrayNode
          */
