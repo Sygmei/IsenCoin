@@ -2,6 +2,15 @@
 
 IsenCoin is a cryptocurrency prototype built using modern C++ !
 
+⚠️ This project is available for learning purpose only ! IsenCoin is not production ready nor it will ever be.
+
+## Features
+
+- Proof Of Work block validation
+- P2P with binary serialization of packets
+- Wallet with graphical interface
+- Mining software integrated
+
 ## Dependencies
 
 | Library | Purpose | Link |
@@ -15,3 +24,25 @@ IsenCoin is a cryptocurrency prototype built using modern C++ !
 | spglog | Logging | https://github.com/gabime/spdlog |
 | tacopie | TCP communication | https://github.com/Cylix/tacopie |
 | vili | Human readable data language | https://github.com/Sygmei/Vili |
+
+## Screenshots
+
+### Main menu
+
+![Main menu screenshot](https://raw.githubusercontent.com/Sygmei/IsenCoin/master/screenshots/main_menu.png)
+
+### Transaction creator
+
+![Transaction creator screenshot](https://raw.githubusercontent.com/Sygmei/IsenCoin/master/screenshots/create_transaction.png)
+
+### Blockchain explorer
+
+![Blockchain explorer screenshot](https://github.com/Sygmei/IsenCoin/blob/master/screenshots/blockchain_explorer.png)
+
+### Block explorer
+
+![Block explorer screenshot](https://github.com/Sygmei/IsenCoin/blob/master/screenshots/block_explorer.png)
+
+### Transaction viewer
+
+![Transaction viewer screenshot](https://github.com/Sygmei/IsenCoin/blob/master/screenshots/transaction_viewer.png)
