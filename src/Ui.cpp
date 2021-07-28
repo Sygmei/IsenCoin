@@ -247,9 +247,9 @@ namespace ic::ui
                         Log->warn("Invalid Prefix character (not in Base58)");
                     }
                 }
-                ic::Log->error("Creating Wallet with following prefix : '{}'", wallet_prefix);
+                ic::Log->info("Creating Wallet with following prefix : '{}'", wallet_prefix);
                 creating_wallet = true;
-                std::thread wallet_creation_thread([&]()
+                std::thread wallet_creation_thread([wallet_prefix, this]()
                 {
                     wallet_creator.generate(wallet_prefix);
                     creating_wallet = 2;

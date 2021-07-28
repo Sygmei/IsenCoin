@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <functional>
 #include <stdexcept>
+#include <iterator>
 
 namespace msgpack11 {
 
